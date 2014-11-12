@@ -795,12 +795,12 @@ e.g. some-function-name, 123, 12_234."
   (paxedit-whitespace-clean t)
   (paxedit-whitespace-clean))
 
-(defun untabify-buffer ()
+(defun paxedit-untabify-buffer ()
   "Remove all tabs in the buffer."
   (interactive)
   (untabify (point-min) (point-max)))
 
-(defun indent-buffer ()
+(defun paxedit-indent-buffer ()
   "Re-indent buffer."
   (interactive)
   (indent-region (point-min) (point-max)))
@@ -808,8 +808,8 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-cleanup ()
   "Indent buffer as defined by mode, remove tabs, and delete trialing whitespace."
   (interactive)
-  (indent-buffer)
-  (untabify-buffer)
+  (paxedit-indent-buffer)
+  (paxedit-untabify-buffer)
   (delete-trailing-whitespace))
 
 ;;; Interactive Functions
