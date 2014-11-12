@@ -164,9 +164,9 @@ when t '-!-(+ 1 2))" "(
                "'art
                 'project;; My Comment-!-"))
   (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                        (emacs-lisp-mode)
-                        (paredit-mode)
-                        (call-interactively 'paxedit-kill)))
+                             (emacs-lisp-mode)
+                             (paredit-mode)
+                             (call-interactively 'paxedit-kill)))
                ("-!-" "message:: Nothing found to kill in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to kill in this context.")))
 
@@ -200,9 +200,9 @@ when t '-!-(+ 1 2))" "(
                "'art-!-
                 'project"))
   (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                        (emacs-lisp-mode)
-                        (paredit-mode)
-                        (call-interactively 'paxedit-delete)))
+                             (emacs-lisp-mode)
+                             (paredit-mode)
+                             (call-interactively 'paxedit-delete)))
                ("-!-" "message:: Nothing found to delete in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to delete in this context.")))
 
@@ -356,7 +356,8 @@ when t '-!-(+ 1 2))" "(
  (+ 2-!- 3))" "(+ 2-!- 3)")
               ("(1+ (+ 1 2
  (+ 2-!- 3)))" "(1+ (+ 2-!- 3))")
-              ("-!-" "-!-"))
+              ("-!-" "-!-")
+              ("(concat user-me-!-ssage name)" "-!-user-message"))
   (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
                         (paxedit-sexp-raise)))
                ("-!-" "message:: No SEXP found to raise.")))
@@ -389,3 +390,8 @@ when t '-!-(+ 1 2))" "(
                 (insert " ")
                 (call-interactively 'yank))
               ("(+ 1 2-!-)" "(+ 1 2) (+ 1 2)-!-")))
+
+(xt-deftest paxedit-symbol-change-case
+  (xtd-setup= (lambda (_) (call-interactively 'paxedit-symbol-change-case))
+              ("hell-!-o" "HELL-!-O")
+              ("HELL-!-O" "hell-!-o")))

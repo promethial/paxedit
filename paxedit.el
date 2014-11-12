@@ -834,15 +834,15 @@ e.g. some-function-name, 123, 12_234."
                (message "No symbol found to copy")))
 
 (defun paxedit-symbol-kill ()
-  "Kill the symbol the cursor is on or next to. Also cleanup whitespace but whitespace is not captured in the kill."
+  "Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
                (progn (paxedit-region-kill it)
                       (paxedit-whitespace-clean-context))
                (message "No symbol found to kill")))
 
-(defun paxedit-symbol-upcase ()
-  "Uppercase all the letters in the symbol the cursor is on or next to."
+(defun paxedit-symbol-change-case ()
+  "Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
                (funcall (if (let ((case-fold-search nil))
@@ -967,7 +967,7 @@ e.g. some-function-name, 123, 12_234."
                  t))
 
 (defun paxedit-sexp-raise ()
-  "Raise the current SEXP."
+  "Raises the expression the cursor is in while perserving the cursor location."
   (interactive)
   (if (paxedit-symbol-cursor-within?)
       (progn (goto-char (cl-first (paxedit-symbol-current-boundary)))
@@ -987,7 +987,7 @@ e.g. some-function-name, 123, 12_234."
   (paxedit-reindent-defun))
 
 (defun paxedit-wrap-comment ()
-  "Wrap a comment around the current SEXP. If comment already encloses current SEXP then the enclosing comment is removed."
+  "Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed."
   (interactive)
   (paxedit-awhen (paxedit-sexp-core-region)
                  (if (equal 'comment (paxedit-sexp-parent-function-symbol))
@@ -1184,7 +1184,7 @@ e.g. some-function-name, 123, 12_234."
         (paxedit-sexp-backward-up 1))))
 
 (defun paxedit-backward-end (&optional n)
-  "While located anywhere within a symbolic expression this command will move the cursor to the end of the symbolic expression."
+  "Move to the end of the explicit expression, implicit expression or comment."
   (interactive "p")
   (dotimes (_ n)
     (or (paxedit-comment-backward :end)
@@ -1213,7 +1213,7 @@ e.g. some-function-name, 123, 12_234."
 ;;; Context Dependent Kill, Copy, and Delete
 
 (defun paxedit-kill (&optional n)
-  "Kills the comment, implicit SEXP, or SEXP depending on what the cursor is on."
+  "Kill current explicit expression, implicit expression, or comment. Also cleans up left-over whitespace from kill and corrects indentation."
   (interactive "p")
   (or (paxedit-comment-kill)
       (paxedit-implicit-sexp-kill n)
@@ -1221,14 +1221,14 @@ e.g. some-function-name, 123, 12_234."
       (message paxedit-message-kill)))
 
 (defun paxedit-copy (&optional n)
-  "Copies the comment, implicit SEXP, or SEXP depending on what the cursor is on."
+  "Copy current explicit expression, implicit expression, or comment."
   (interactive "p")
   (cl-letf (((symbol-function 'paxedit-region-kill) #'paxedit-region-copy)
             (paxedit-message-kill paxedit-message-copy))
     (paxedit-kill n)))
 
 (defun paxedit-delete (&optional n)
-  "Deletes the comment, implicit SEXP, or SEXP depending on what the cursor is on."
+  "Delete current explicit expression, implicit expression, or comment. Also cleans up the left-over whitespace from deletion and corrects indentation."
   (interactive "p")
   (cl-letf (((symbol-function 'paxedit-region-kill) #'paxedit-region-delete)
             (paxedit-message-kill paxedit-message-delete))
@@ -1237,12 +1237,12 @@ e.g. some-function-name, 123, 12_234."
 ;;; Context Dependent Transpose
 
 (defun paxedit-transpose-forward (&optional n)
-  "Transpose forward explicit symbolic expressions, implicit symbolic expressions, symbols, and comments based on context."
+  "Swap the current explicit expression, implicit expression, symbol, or comment forward depending on what the cursor is on and what is available to swap with. This command is very versatile and will do the \"right\" thing in each context."
   (interactive "p")
   (paxedit-context-refactor-sexp :forward n))
 
 (defun paxedit-transpose-backward (&optional n)
-  "Transpose backward explicit symbolic expressions, implicit symbolic expressions, symbols, and comments based on context."
+  "Swaps the current explicit, implicit expression, symbol, or comment backward depending on what the cursor is on and what is available to swap with. Swaps in the opposite direction of paxedit-transpose-forward."
   (interactive "p")
   (paxedit-context-refactor-sexp :backward n))
 

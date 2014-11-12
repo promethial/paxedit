@@ -29,22 +29,22 @@
            3 4)
       g 20)
 
-(ms-put (ms-new)
-        :lead-actor "Tom Hanks"
-        :movie-title (concat "Apollo 13"
-                             ", The Movie")
-        :cost 100000000)
+(paxedit-put (paxedit-new)
+             :lead-actor "Tom Hanks"
+             :movie-title (concat "Apollo 13"
+                                  ", The Movie")
+             :cost 100000000)
 
 ;;; Killing / Deleting expressions
 
-(ms-put (ms-new) :one 1 :two 2 :delete-me 123123123123 :three 3)
+(paxedit-put (paxedit-new) :one 1 :two 2 :delete-me 123123123123 :three 3)
 
 ;;; Unnecessary comment
 
-(ms-put (ms-new)
-        :movie "Apollo 13"
-        :cost 100000000
-        "Tom Hanks" :lead-actor)
+(paxedit-put (paxedit-new)
+             :movie "Apollo 13"
+             :cost 100000000
+             "Tom Hanks" :lead-actor)
 
 ;;; Killing / deleting symbols
 
@@ -70,6 +70,6 @@
 
 (comment (+ 1 2))
 
-(ms-aif (+ 1 2)
+(paxedit-aif (+ 1 2)
     (+ 2 it)
   (+ 3 it))

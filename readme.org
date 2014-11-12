@@ -23,9 +23,11 @@ Paxedit takes a departure from the above manual state of code editing through au
      - [[#setup][Setup]]
      - [[#customization][Customization]]
  - [[#functionality][Functionality]]
-     - [[#navigation][Navigation]]
-     - [[#refactoring][Refactoring]]
+     - [[#context-navigation][Context Navigation]]
+     - [[#context-refactoring][Context Refactoring]]
+     - [[#symbol-refactoring][Symbol Refactoring]]
      - [[#debugging][Debugging]]
+     - [[#whitespace--indentation][Whitespace & Indentation]]
  - [[#other-notes--performance][Other Notes & Performance]]
  - [[#inspiration][Inspiration]]
  - [[#license][License]]
@@ -128,23 +130,27 @@ Paxedit understands functions with implicit associations among its arguments (th
 ** Rationale
 Paxedit eliminates the work, tedium, and mistakes involved with manual editing and refactoring LISP code.
 
-Tools—software, hardware, or process—should be levers for the mind. Paredit for Emacs is a great example. It lifts the need for the user to think about the keeping parenthesis balanced, since it enforces balanced parenthe- sis as a default and forces one to use the built in mechanisms to manipulate symbolic expressions which are guaranteed to stay balanced. This removes a large source of errors, so much so that I can’t remember a time where I had unbalanced parenthesis cause issues in my code. Useful tools allow the user to stop focusing on the incidental, the mechanics, and simply do the task at hand. Paxedit allows the user to forget about the mechanics and incidental details of refactoring SEXPs, strings, symbols, and comments.
+Tools—software, hardware, or process—should be levers for the mind. Paredit for Emacs is a great example. It lifts the need for the user to think about the keeping parenthesis balanced, since it enforces balanced parenthe- sis as a default and forces one to use the built in mechanisms to manipulate symbolic expressions which are guaranteed to stay balanced. This removes a large source of errors. So much so that, personally, I can’t remember a time where unbalanced parenthesis caused issues in my code. Useful tools allow the user to stop focusing on the incidental, the mechanics, and simply do the task at hand. Paxedit allows the user to forget about the mechanics and incidental details of refactoring SEXPs, strings, symbols, and comments.
 * Installation & Usage
 ** Requirements
-1. Emacs 24.1 (may work on lower versions of Emacs, but untested)
-2. Paredit - Paredit mode does not need to be enabled for Paxedit to work. In fact, one could use SmartParens and Paxedit at the same time as long as Paredit is installed.
+1. Emacs 24.1 or greater (may work on lower versions of Emacs, but untested)
+2. Paredit Version 23 (on MELPA Stable) - Paredit mode does not need to be enabled for Paxedit to work. In fact, one could use SmartParens and Paxedit at the same time as long as Paredit is installed.
+3. [[https://github.com/promethial/xtest][XTest Library]] (Optional, for those interested in modifying Paxedit. Highly recommend downloading this library to leverage existing unit tests written for Paxedit).
 ** MELPA
 Coming soon..
 ** Manual Install
 1. Install the dependencies of Paxedit
    1. Paredit
-   2. MS ELISP Library
-   3. XTEST Library (Optional, for those interested in modifying highly recommend downloading this library to leverage existing unit tests written for Paxedit).
+2. Install Paxedit by including ~paxedit.el~ in your path or building the file into a package.
 ** Setup
 Add this to your innit.el, .emacs.d, or other configuration file.
 #+BEGIN_SRC emacs-lisp
 ;;; Load paxedit functionality
 (require 'paxedit)
+
+;;; Or load paxedit functionality in specific mode
+(add-hook 'emacs-lisp-mode-hook
+          (lambda () (require 'paxedit)))
 #+END_SRC
 ** Customization
 1. Prevent whitespace and alignment cleanup. By default Paxedit fixes whitespace and alignment issues left over from refactoring. This functionality by default is enabled, but can be disabled.
@@ -195,7 +201,7 @@ Add this to your innit.el, .emacs.d, or other configuration file.
                                 paxedit-sexp-implicit-structures paxedit-implicit-structures-clojure))))
 #+END_SRC
 * Functionality
-** Navigation
+** Context Navigation
    1. ~paxedit-backward-up~ - Move to the start of the explicit expression, implicit expression or comment.
       #+BEGIN_SRC emacs-lisp
 ;;; Explicit expression
@@ -223,7 +229,7 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 
 (message "hello world")    -!-; While in some comment editing
       #+END_SRC
-   2. ~paxedit-backward-end~ - Move to the end of the explicit expression, implicit expression or comment
+   2. ~paxedit-backward-end~ - Move to the end of the explicit expression, implicit expression or comment.
       #+BEGIN_SRC emacs-lisp
 ;;; Explicit expression
 (+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 (+ 3 4)-!-)
@@ -250,7 +256,7 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 
 (message "hello world")       ; While in some comment editing-!-
       #+END_SRC
-** Refactoring
+** Context Refactoring
    1. ~paxedit-transpose-forward~ - Swap the current explicit expression, implicit expression, symbol, or comment forward depending on what the cursor is on and what is available to swap with. This command is very versatile and will do the "right" thing in each context. See below for the different uses.
       #+BEGIN_SRC emacs-lisp
 ;;; Swapping symbols, place the cursor within the symbol and run the
@@ -336,21 +342,7 @@ Add this to your innit.el, .emacs.d, or other configuration file.
       #+END_SRC
    4. ~paxedit-kill~ - Kill current explicit expression, implicit expression, or comment. Also cleans up left-over whitespace from kill and corrects indentation.
    5. ~paxedit-copy~ - Copy current explicit expression, implicit expression, or comment.
-   6. ~paxedit-symbol-kill~ - Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill.
-      #+BEGIN_SRC emacs-lisp
-;;; Kill the current symbol and add it to kill ring and cleans up left
-;;; over whitespace.
-(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
-
-(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
-      #+END_SRC
-   7. ~paxedit-symbol-delete~ - Delete the symbol the text cursor is next to or in and cleans up the left-over whitespace from delete.
-      #+BEGIN_SRC emacs-lisp
-(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
-
-(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
-      #+END_SRC
-   8. ~paxedit-raise-sexp~ - Raises the expression the cursor is in while perserving the cursor location.
+   8. ~paxedit-sexp-raise~ - Raises the expression the cursor is in while perserving the cursor location.
       #+BEGIN_SRC emacs-lisp
 (when t
   (message -!-"hello world"))
@@ -378,18 +370,27 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 ;;; expression causes the comment to be removed.
 (comment (message -!-"hello world")) ⟹ (message -!-"hello world")
       #+END_SRC
-   10. ~paxedit-cleanup~ - Indent the buffer according to the rules of the current mode.
-   11. ~paxedit-delete-whitespace~ - Delete all whitespace to the right and left of the cursor.
-       #+BEGIN_SRC emacs-lisp
-;;; Collapses the whitespace and newlines on both sides of the cursor
+** Symbol Refactoring
+   1. ~paxedit-symbol-change-case~ - Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol.
+      #+BEGIN_SRC emacs-lisp
+hell-!-o ⟹ HELL-!-O
 
-(+ 1
-   -!-2)
+HELL-!-O ⟹ hell-!-o
+      #+END_SRC
+   2. ~paxedit-symbol-kill~ - Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill.
+      #+BEGIN_SRC emacs-lisp
+;;; Kill the current symbol and add it to kill ring and cleans up left
+;;; over whitespace.
+(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
 
-;;; ⟹
+(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
+      #+END_SRC
+   3. ~paxedit-symbol-delete~ - Delete the symbol the text cursor is next to or in and cleans up the left-over whitespace from delete.
+      #+BEGIN_SRC emacs-lisp
+(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
 
-(+ 1-!-2)
-       #+END_SRC
+(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
+      #+END_SRC
 ** Debugging
    1. ~paxedit-macro-expand-replace~ - Expand the current expression in its place if it is macro.
       #+BEGIN_SRC emacs-lisp
@@ -402,6 +403,19 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 (let ((it some-value))
   (if it (progn (message "It's true!")) nil))-!-
       #+END_SRC
+** Whitespace & Indentation
+   1. ~paxedit-cleanup~ - Indent the buffer according to the rules of the current mode.
+   2. ~paxedit-delete-whitespace~ - Delete all whitespace to the right and left of the cursor.
+       #+BEGIN_SRC emacs-lisp
+;;; Collapses the whitespace and newlines on both sides of the cursor
+
+(+ 1
+   -!-2)
+
+;;; ⟹
+
+(+ 1-!-2)
+       #+END_SRC
 * Other Notes & Performance
 1. Context dependent actions have certain limits and trade-offs. There had to be decisions made on whether to go for precisely similar behavior across commands or some variation due to pragmatic considerations.
 2. This code was written with a focus on clarity rather than efficiency.
