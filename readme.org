@@ -178,10 +178,10 @@ Add this to your innit.el, .emacs.d, or other configuration file.
                                               (setf . (1 2))
                                               (setq-default . (1 2))
                                               (defcustom . (4 2))
-                                              (ms-new . (1 2))
-                                              (ms-cnew . (1 2))
-                                              (ms-cond . (1 2))
-                                              (ms-put . (2 2))))
+                                              (paxedit-new . (1 2))
+                                              (paxedit-cnew . (1 2))
+                                              (paxedit-cond . (1 2))
+                                              (paxedit-put . (2 2))))
 
 ;;; Associating the perviously defined implict functions with Emacs LISP
 
