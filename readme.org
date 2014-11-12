@@ -1,0 +1,399 @@
+#+TITLE: Paxedit - Peaceful LISP Editing
+#+AUTHOR: Mustafa Shameem
+#+STARTUP: indent
+#+OPTIONS: toc:nil
+#+BEGIN_ABSTRACT
+#+BEGIN_CENTER
+*Summary*
+#+END_CENTER
+Paxedit is an Emacs extension which eliminates the work, tedium, and mistakes involved with manual editing and refactoring LISP code. Paxedit allows the quick refactoring of symbols, symbolic expressions (explicit and implicit), and comments. Normally a unique command or set of commands would allow a user to delete, copy, or transpose symbols, symbolic expressions, or comments. Additionally, after executing some delete or general refactoring commands the user must clean up any extraneous whitespace, correct indentation, and make sure all their expressions are balanced.
+
+Paxedit takes a departure from the above manual state of code editing through automation. Paxedit does away with multiple different commands. Paxedit knows when it's in a symbol or a comment. *Paxedit does the right thing in the right context.* For example, Paxedit has one delete command which can be used to delete comments and symbolic expresions explicit and implicit. That is just one of many Paxedit's context aware commands. Additionally, all Paxedit commands by default cleanup whitespace, fix indentation issues caused by refactoring, and expressions stay balanced.
+#+END_ABSTRACT
+#+LATEX: \tableofcontents
+#+TOC: headlines 2
+* Introduction
+** What is Paxedit?
+Paxedit allows the quick refactoring of symbolic expressions from deleting, swapping with neighbor symbolic expressions, and enclosing specified expressions in a comment expression.
+- Conceptually consistent
+- Parenthesis, brackets, quotes, etc. stay balanced
+- Removes the need to select different commands for different contexts
+- No need for manual whitespace cleanup
+- Code stays correctly indented
+- Understands implicit expressions
+- Customizable
+  - Can be extended to work for other languages
+  - Can even be used for general text editing
+
+Consider the following block of code. *In the code example below, the characters '-!-' are a stand in for the cursor.*
+#+BEGIN_SRC emacs-lisp
+(if x
+    (message-!- "It's true!")
+  (message "It's false!"))
+
+;;; To delete the "(message "It's true!")" symbolic
+;;; expression from the containing if expression
+;;; consider the number of steps required.
+
+;;; 1. Move the cursor to the outside of the expression
+
+(if x
+    -!-(message "It's true!")
+  (message "It's false!"))
+
+;;; 2. Delete the expression with a command that deletes the expression
+
+(if x
+    -!-
+  (message "It's false!"))
+
+;;; 3. Clean up the remaining whitespace
+
+(if x-!-
+  (message "It's false!"))
+
+;;; Paxedit can accomplish the above in one command.
+;;; Place the cursor inside the expression you want
+;;; to delete and run the command:
+;;; paxedit-delete
+#+END_SRC
+
+Paxedit understands functions with implicit associations among its arguments (think Clojure maps or setf). Often times it is convenient to manipulate expressions that are not grouped in parenthesis, brackets, or quotes as a group. Essentially Paxedit allows structures that are not enclosed by parenthesis, brackets, or quotes to be manipulated as if they were. *In the code example below, the characters '-!-' are a stand in for the cursor.*
+#+BEGIN_SRC emacs-lisp
+;;; Implicit expressions are features of most LISP languages,
+;;; below are examples from Emacs LISP & Clojure.
+
+;;; Emacs LISP
+
+(setf a 10
+      b 20)
+
+;;; Clojure's Map
+
+{:name "Jake"
+ :age 25}
+
+;;; The variable a is associated with the value 10 in setf.
+;;; It would be convenient if we could manipulate the
+;;; variables and their values as a unit for refactoring
+;;; pursposes. For example, we might want to delete the
+;;; pair 'b 20' in one command. Paxedit allows exactly that.
+
+;;; Deleting implicit expression
+
+(setf a 10
+      b-!- 20)
+
+;;; ⟹ (paxedit-delete)
+
+(setf a 10-!-)
+
+;;; Swapping backwards
+
+(setf b 20
+      a-!- 10)
+
+;;; ⟹ (paxedit-transpose-backward)
+
+(setf a-!- 10
+      b 20)
+
+;;; What Paxedit sees
+
+(setf (a 10)
+      (b 10))
+#+END_SRC
+** Rationale
+Paxedit eliminates the work, tedium, and mistakes involved with manual editing and refactoring LISP code.
+
+Tools—software, hardware, or process—should be levers for the mind. Paredit for Emacs is a great example. It lifts the need for the user to think about the keeping parenthesis balanced, since it enforces balanced parenthe- sis as a default and forces one to use the built in mechanisms to manipulate symbolic expressions which are guaranteed to stay balanced. This removes a large source of errors, so much so that I can’t remember a time where I had unbalanced parenthesis cause issues in my code. Useful tools allow the user to stop focusing on the incidental, the mechanics, and simply do the task at hand. Paxedit allows the user to forget about the mechanics and incidental details of refactoring SEXPs, strings, symbols, and comments.
+* Demo
+1. Watch a demo of Paxedit on Youtube.
+2. Practice using Paxedit in practice.el
+* Installation & Defaults
+** Requirements
+1. Emacs 24.1 (may work on lower versions of Emacs, but untested)
+2. Paredit - Paredit mode does not need to be enabled for Paxedit to work. In fact, one could use SmartParens and Paxedit at the same time as long as Paredit is installed.
+** MELPA
+** Manual Install
+1. Install the dependencies of Paxedit
+   1. Paredit
+   2. MS ELISP Library
+   3. XTEST Library (Optional, for those interested in modifying highly recommend downloading this library to leverage existing unit tests written for Paxedit).
+** Setup
+Add this to your innit.el, .emacs.d, or other configuration file.
+#+BEGIN_SRC emacs-lisp
+;;; Load paxedit functionality
+(require 'paxedit)
+#+END_SRC
+** Customization
+1. Prevent whitespace and alignment cleanup. By default Paxedit fixes whitespace and alignment issues left over from refactoring. This functionality by default is enabled, but can be disabled.
+   #+BEGIN_SRC emacs-lisp
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(paxedit-alignment-cleanup nil))
+#+END_SRC
+2. Adding new implicit functions.
+   #+BEGIN_SRC emacs-lisp
+;;; Function with implicit strucutre of two starting
+;;; at first argument.
+
+(some-function first 1
+               second 2)
+
+;;; Function with implicit structure of three starting
+;;; at the second argument.
+
+(some-function2 ignored-symbol
+                first 1 "one"
+                second 2 "two")
+
+(add-to-list 'paxedit-implicit-functions-elisp '((some-function . (1 2))
+                                                 (some-function2 . (2 3))))
+#+END_SRC
+2. Language specific customization.
+   #+BEGIN_SRC emacs-lisp
+;;; Refer to code in Paxedit which defines implicit functions & structures
+;;; Defining custom implicit functions/macros for ELISP & Clojure shown
+;;; below, and can be used to define new languages.
+(defcustom paxedit-implicit-functions-elisp '((setq . (1 2))
+                                              (setf . (1 2))
+                                              (setq-default . (1 2))
+                                              (defcustom . (4 2))
+                                              (ms-new . (1 2))
+                                              (ms-cnew . (1 2))
+                                              (ms-cond . (1 2))
+                                              (ms-put . (2 2))))
+
+;;; Associating the perviously defined implict functions with Emacs LISP
+
+(add-hook 'emacs-lisp-mode-hook
+          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-elisp))))
+
+;;; Associating the perviously defined implict functions & structures with Clojure
+
+(add-hook 'clojure-mode-hook
+          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-clojure
+                                paxedit-sexp-implicit-structures paxedit-implicit-structures-clojure))))
+#+END_SRC
+* Functionality
+** Navigation
+   1. ~paxedit-backward-up~ - Move to the start of the explicit expression, implicit expression or comment.
+      #+BEGIN_SRC emacs-lisp
+;;; Explicit expression
+(+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 -!-(+ 3 4))
+
+;;; Implicit expression
+
+;;; Implicit structures, Clojure maps
+
+{:one 1
+ :two -!-2
+ :three 3}
+
+;;; ⟹
+
+   {:one 1
+ -!-:two 2
+    :three 3}
+
+;;; In the context of a comment, the cursor will jump to the start of the comment
+
+(message "hello world")       ; While in some comment -!-editing
+
+;;; ⟹
+
+(message "hello world")    -!-; While in some comment editing
+      #+END_SRC
+   2. ~paxedit-backward-end~ - Move to the end of the explicit expression, implicit expression or comment
+      #+BEGIN_SRC emacs-lisp
+;;; Explicit expression
+(+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 (+ 3 4)-!-)
+
+;;; Implicit expression
+
+;;; Implicit structures, Clojure maps
+
+{:one 1
+ :two -!-2
+ :three 3}
+
+;;; ⟹
+
+{:one 1
+ :two 2-!-
+ :three 3}
+
+;;; In the context of a comment, the cursor will jump to the start of the comment
+
+(message "hello world")       ; While in some comment -!-editing
+
+;;; ⟹
+
+(message "hello world")       ; While in some comment editing-!-
+      #+END_SRC
+** Refactoring
+   1. ~paxedit-transpose-forward~ - Swap the current explicit expression, implicit expression, symbol, or comment forward depending on what the cursor is on and what is available to swap with. This command is very versatile and will do the "right" thing in each context. See below for the different uses.
+      #+BEGIN_SRC emacs-lisp
+;;; Swapping symbols, place the cursor within the symbol and run the
+;;; shortcut for paxedit-transpose-forward to swap places with the
+;;; next symbol or expression while preserving cursor and correctly
+;;; reindenting.
+(+ tw-!-o one three) ⟹ (+ one tw-!-o three)
+
+(+ 1-!-0 (+ 2 3)) ⟹ (+ (+ 2 3) 1-!-0)
+
+;;; Swapping expressions, place the cursor anywhere not within a
+;;; symbol and the containing expression can be swapped with the next
+;;; expression.
+(concat "-!-world!" "Hello ") ⟹ (concat "Hello " "-!-world!")
+
+(- (+ -!-3 4) (+ 100 200)) ⟹ (- (+ 100 200) (+ -!-3 4))
+
+;;; Swapped expressions are properly indented
+(if some-condition
+    (-!-message "It's false")
+  (message "It's true"))
+
+;;; ⟹
+
+(if some-condition
+    (message "It's true")
+  (-!-message "It's false"))
+
+;;; Swapping expressions implicit structures e.g. Clojure maps
+{:two-!- 2
+ :one 1
+ :three 3}
+
+;;; ⟹
+
+{:one 1
+ :two-!- 2
+ :three 3}
+
+;;; Swapping comments
+
+;;; should be-!- last
+;;; should be first
+
+;;; ⟹
+
+;;; should be first
+;;; should be-!- last
+      #+END_SRC
+   2. ~paxedit-transpose-backward~ - Swaps the current explicit, implicit expression, symbol, or comment backward depending on what the cursor is on and what is available to swap with. Swaps in the opposite direction of ~paxedit-transpose-forward~, see forward documentation for examples.
+   3. ~paxedit-delete~ - Delete current explicit expression, implicit expression, or comment. Also cleans up the left-over whitespace from deletion and corrects indentation.
+      #+BEGIN_SRC emacs-lisp
+;;; Deleting expressions
+(when some-truth
+  (message "It's true!")
+  (message-!- "It's false!"))
+
+;;; ⟹
+
+(when some-truth
+  (message "It's true!"))
+
+;;; Deleting implicit expressions
+
+(setf x 1
+      y -!-2
+      g 3)
+
+;;; ⟹
+
+(setf x 1
+      g 3)
+
+;;; Deleting comments
+
+;;; Some unnecessary -!-comment
+;;; Needed comment
+
+;;; ⟹
+
+;;; Needed comment
+
+      #+END_SRC
+   4. ~paxedit-kill~ - Kill current explicit expression, implicit expression, or comment. Also cleans up left-over whitespace from kill and corrects indentation.
+   5. ~paxedit-copy~ - Copy current explicit expression, implicit expression, or comment.
+   6. ~paxedit-symbol-kill~ - Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill.
+      #+BEGIN_SRC emacs-lisp
+;;; Kill the current symbol and add it to kill ring and cleans up left
+;;; over whitespace.
+(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
+
+(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
+      #+END_SRC
+   7. ~paxedit-symbol-delete~ - Delete the symbol the text cursor is next to or in and cleans up the left-over whitespace from delete.
+      #+BEGIN_SRC emacs-lisp
+(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
+
+(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
+      #+END_SRC
+   8. ~paxedit-raise-sexp~ - Raises the expression the cursor is in while perserving the cursor location.
+      #+BEGIN_SRC emacs-lisp
+(when t
+  (message -!-"hello world"))
+
+;;; ⟹
+
+(message -!-"hello world")
+
+;;; When located in a symbol
+
+(when t
+  (mess-!-age "hello world"))
+
+;;; ⟹
+
+(when t
+  mess-!-age)
+#+END_SRC
+   9. ~paxedit-wrap-comment~ - Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed.
+      #+BEGIN_SRC emacs-lisp
+;;; Comment or uncomment the expression.
+(message -!-"hello world") ⟹ (comment (message -!-"hello world"))
+
+;;; Executing the paxedit-wrap-comment function on a commented
+;;; expression causes the comment to be removed.
+(comment (message -!-"hello world")) ⟹ (message -!-"hello world")
+      #+END_SRC
+   10. ~paxedit-cleanup~ - Indent the buffer according to the rules of the LISP mode.
+   11. ~paxedit-delete-whitespace~ - Delete all whitespace to the right and left of the cursor.
+       #+BEGIN_SRC emacs-lisp
+;;; Collapses the whitespace and newlines on both sides of the cursor
+
+(+ 1
+   -!-2)
+
+;;; ⟹
+
+(+ 1-!-2)
+       #+END_SRC
+** Debugging
+   1. ~paxedit-macro-expand-replace~ - Expand the current expression if it is macro.
+      #+BEGIN_SRC emacs-lisp
+;;; Example of expanding the anaphoric, "awhen" macro in place.
+(awhen some-value-!-
+       (message "It's true!"))
+
+;;; ⟹
+
+(let ((it some-value))
+  (if it (progn (message "It's true!")) nil))-!-
+      #+END_SRC
+* Other Notes & Performance
+1. Context dependent actions have certain limits and trade-offs. There had to be decisions made on whether to go for precisely similar behavior across commands or some variation due to pragmatic considerations.
+2. This code was written with a focus on clarity rather than efficiency.
+   1. Implicit SEXPs of large size (the number of symbols or expressions in the SEXP) may be slow during deletion and refactoring. On a 2.3ghz, quad-core I7 processor, implicit expressions of size greater than 150 expressions became noticeably slow to refactor.
+* Inspiration
+1. Paredit - http://www.emacswiki.org/emacs/ParEdit
+2. Brett Victor's, Inventing on Principle Talk
+3. Editing Lisp Code - http://c2.com/cgi/wiki?EditingLispCode
+* License
+GNU GPL v3
