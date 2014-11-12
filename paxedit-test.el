@@ -2,21 +2,21 @@
 (require 'xtest)
 (require 'paxedit)
 
-(xt-deftest ms-region-contains
-  (xtd-should 'ms-region-contains
+(xt-deftest paxedit-region-contains
+  (xtd-should 'paxedit-region-contains
               ((1 . 5) (1 . 5))
               ((1 . 10) (2 . 3))
               ((1 . 10) (1 . 5)))
-  (xtd-should! 'ms-region-contains
+  (xtd-should! 'paxedit-region-contains
                ((1 . 10) (11 . 12))
                ((1 . 10) (5 . 15))))
 
-(xt-deftest ms-nth-satisfies
-  (xtd-should (lambda (func data result) (equal (ms-nth-satisfies data func) result))
+(xt-deftest paxedit-nth-satisfies
+  (xtd-should (lambda (func data result) (equal (paxedit-nth-satisfies data func) result))
               ((lambda (n) (> n 4)) (1 2 3 4 5) 4)
               ((lambda (s) (equal "cat" s)) (1 2 "shark" 3 "cat") 4)
               ((lambda (n) (= n 1)) (1) 0))
-  (xtd-should! (lambda (func data) (ms-nth-satisfies data func))
+  (xtd-should! (lambda (func data) (paxedit-nth-satisfies data func))
                ((lambda (n) (> n 8)) (1 2 3 4 5))
                ((lambda (n) (> n 8)) nil)))
 
@@ -143,15 +143,15 @@ when t '-!-(+ 1 2))" "(
    ;; Special Number
  4)(+ 1 2)-!-")
               ;; SEXP Implicit Kill
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                         :one -!-1234
                         :two 2345)"
-               "(ms-put (ms-new)
+               "(paxedit-put (paxedit-new)
                         :two 2345):one 1234-!-")
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                    -!-     :one 1234
                         :two 2345)'end"
-               "'end(ms-put (ms-new)
+               "'end(paxedit-put (paxedit-new)
                         :one 1234
                         :two 2345)-!-")
               ;; Comment Kill
@@ -181,12 +181,12 @@ when t '-!-(+ 1 2))" "(
               ("(+ 1 2
                 (- 3 -!-6))" "(+ 1 2-!-)")
               ;; SEXP Implicit Delete
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                         :one -!-1234
                         :two 2345)"
-               "(ms-put (ms-new)-!-
+               "(paxedit-put (paxedit-new)-!-
                         :two 2345)")
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                    -!-     :one 1234
                         :two 2345)'end"
                "-!-'end")
@@ -226,42 +226,42 @@ when t '-!-(+ 1 2))" "(
                 ;; Misc Comment
                 (+-!- 1 1)")
               ;; Implicit SEXP Refactoring
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                         :one -!-123
                         :two 234)"
-               "(ms-put (ms-new)
+               "(paxedit-put (paxedit-new)
                         :two 234
                         :one -!-123)")
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                         :setup \"na\"
                         :one -!-123
                         :two 234)"
-               "(ms-put (ms-new)
+               "(paxedit-put (paxedit-new)
                         :setup \"na\"
                         :two 234
                         :one -!-123)")
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                         -!-:one 123
                         :two 234)"
-               "(ms-put (ms-new)
+               "(paxedit-put (paxedit-new)
                         :two 234
                         -!-:one 123)")
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                         :on-!-e 123
                         :two 234)"
-               "(ms-put (ms-new)
+               "(paxedit-put (paxedit-new)
                         123 :on-!-e
                         :two 234)")
-              ("(ms-put (ms-new)
+              ("(paxedit-put (paxedit-new)
                         (one 1)-!- 1234
                         :two 2345)"
-               "(ms-put (ms-new)
+               "(paxedit-put (paxedit-new)
                         :two 2345
                         (one 1)-!- 1234)")
-              ("(ms-put-!- (ms-new) :one 1)
+              ("(paxedit-put-!- (paxedit-new) :one 1)
                 (print 'x)"
                "(print 'x)
-                (ms-put-!- (ms-new) :one 1)")
+                (paxedit-put-!- (paxedit-new) :one 1)")
               ;; Comment Refactoring
               ("(+ 1 1)
                 ;; -!-Hello World
@@ -287,7 +287,7 @@ when t '-!-(+ 1 2))" "(
                      (error (cadr ex)))))
                ("" "message:: No action found for this context.")
                ("(somefunc 1 2 3 (+ 2 -!-))" "message:: Nothing found to swap with.")
-               ("(ms-put (ms-new)
+               ("(paxedit-put (paxedit-new)
                         (one 1) 1234
                         :two-!- 2345)" "message:: Nothing found to swap with.")))
 
@@ -317,10 +317,10 @@ when t '-!-(+ 1 2))" "(
                 (call-interactively 'paxedit-backward-up))
               ("(when (+ 1-!- 2) t)" "(when -!-(+ 1 2) t)")
               ;; Implicit SEXP backward up tests
-              ("(ms-put (ms-new) :one-!- 1)" "(ms-put (ms-new) -!-:one 1)")
-              ("(ms-put (ms-new) :o-!-ne 1)" "(ms-put (ms-new) -!-:one 1)")
-              ("(ms-put (ms-new) -!-:one 1)" "-!-(ms-put (ms-new) :one 1)")
-              ("(ms-put (ms-new) :one 1-!-)" "-!-(ms-put (ms-new) :one 1)")
+              ("(paxedit-put (paxedit-new) :one-!- 1)" "(paxedit-put (paxedit-new) -!-:one 1)")
+              ("(paxedit-put (paxedit-new) :o-!-ne 1)" "(paxedit-put (paxedit-new) -!-:one 1)")
+              ("(paxedit-put (paxedit-new) -!-:one 1)" "-!-(paxedit-put (paxedit-new) :one 1)")
+              ("(paxedit-put (paxedit-new) :one 1-!-)" "-!-(paxedit-put (paxedit-new) :one 1)")
               ;; Comment backward up
               (";; hello -!-world" "-!-;; hello world"))
   (xtd-setup= (lambda (_) (emacs-lisp-mode)
@@ -328,7 +328,7 @@ when t '-!-(+ 1 2))" "(
                 (paxedit-backward-up 2))
               ("(when (+ 1-!- 2) t)" "-!-(when (+ 1 2) t)")
               ;; Implicit SEXP backward up
-              ("(ms-put (ms-new) :one-!- 1)" "-!-(ms-put (ms-new) :one 1)")))
+              ("(paxedit-put (paxedit-new) :one-!- 1)" "-!-(paxedit-put (paxedit-new) :one 1)")))
 
 (xt-deftest paxedit-backward-end
   (xtd-setup= (lambda (_) (emacs-lisp-mode)
@@ -336,10 +336,10 @@ when t '-!-(+ 1 2))" "(
                 (call-interactively 'paxedit-backward-end))
               ("(when (+ 1-!- 2) t)" "(when (+ 1 2)-!- t)")
               ;; Implicit SEXP backward end
-              ("(ms-put (ms-new) :one-!- 1)" "(ms-put (ms-new) :one 1-!-)")
-              ("(ms-put (ms-new) :o-!-ne 1)" "(ms-put (ms-new) :one 1-!-)")
-              ("(ms-put (ms-new) -!-:one 1)" "(ms-put (ms-new) :one 1)-!-")
-              ("(ms-put (ms-new) :one 1-!-)" "(ms-put (ms-new) :one 1)-!-")
+              ("(paxedit-put (paxedit-new) :one-!- 1)" "(paxedit-put (paxedit-new) :one 1-!-)")
+              ("(paxedit-put (paxedit-new) :o-!-ne 1)" "(paxedit-put (paxedit-new) :one 1-!-)")
+              ("(paxedit-put (paxedit-new) -!-:one 1)" "(paxedit-put (paxedit-new) :one 1)-!-")
+              ("(paxedit-put (paxedit-new) :one 1-!-)" "(paxedit-put (paxedit-new) :one 1)-!-")
               ;; Comment backward end
               (";; hello-!- world, :D" ";; hello world, :D-!-"))
   (xtd-setup= (lambda (_) (emacs-lisp-mode)
@@ -347,7 +347,7 @@ when t '-!-(+ 1 2))" "(
                 (paxedit-backward-end 2))
               ("(when (+ 1-!- 2) t)" "(when (+ 1 2) t)-!-")
               ;; Implicit SEXP backward end tests
-              ("(ms-put (ms-new) :one-!- 1)" "(ms-put (ms-new) :one 1)-!-")))
+              ("(paxedit-put (paxedit-new) :one-!- 1)" "(paxedit-put (paxedit-new) :one 1)-!-")))
 
 (xt-deftest paxedit-sexp-raise
   (xtd-setup= (lambda (_) (paxedit-sexp-raise))

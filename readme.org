@@ -10,7 +10,30 @@ Paxedit is an Emacs extension which eliminates the work, tedium, and mistakes in
 Paxedit takes a departure from the above manual state of code editing through automation. Paxedit does away with multiple different commands. Paxedit knows when it's in a symbol or a comment. *Paxedit does the right thing in the right context.* For example, Paxedit has one delete command which can be used to delete comments and symbolic expresions explicit and implicit. That is just one of many Paxedit's context aware commands. Additionally, all Paxedit commands by default cleanup whitespace, fix indentation issues caused by refactoring, and expressions stay balanced.
 #+END_ABSTRACT
 #+LATEX: \tableofcontents
-#+TOC: headlines 2
+#+TOC: nil
+* Table of Contents                                                     :toc:
+ - [[#demo][Demo]]
+ - [[#introduction][Introduction]]
+     - [[#what-is-paxedit][What is Paxedit?]]
+     - [[#rationale][Rationale]]
+ - [[#installation--usage][Installation & Usage]]
+     - [[#requirements][Requirements]]
+     - [[#melpa][MELPA]]
+     - [[#manual-install][Manual Install]]
+     - [[#setup][Setup]]
+     - [[#customization][Customization]]
+ - [[#functionality][Functionality]]
+     - [[#navigation][Navigation]]
+     - [[#refactoring][Refactoring]]
+     - [[#debugging][Debugging]]
+ - [[#other-notes--performance][Other Notes & Performance]]
+ - [[#inspiration][Inspiration]]
+ - [[#license][License]]
+
+* Demo
+1. Watch a demo of Paxedit on Youtube.
+2. Practice using Paxedit in ~practice.el~.
+
 * Introduction
 ** What is Paxedit?
 Paxedit allows the quick refactoring of symbolic expressions from deleting, swapping with neighbor symbolic expressions, and enclosing specified expressions in a comment expression.
@@ -106,10 +129,7 @@ Paxedit understands functions with implicit associations among its arguments (th
 Paxedit eliminates the work, tedium, and mistakes involved with manual editing and refactoring LISP code.
 
 Tools—software, hardware, or process—should be levers for the mind. Paredit for Emacs is a great example. It lifts the need for the user to think about the keeping parenthesis balanced, since it enforces balanced parenthe- sis as a default and forces one to use the built in mechanisms to manipulate symbolic expressions which are guaranteed to stay balanced. This removes a large source of errors, so much so that I can’t remember a time where I had unbalanced parenthesis cause issues in my code. Useful tools allow the user to stop focusing on the incidental, the mechanics, and simply do the task at hand. Paxedit allows the user to forget about the mechanics and incidental details of refactoring SEXPs, strings, symbols, and comments.
-* Demo
-1. Watch a demo of Paxedit on Youtube.
-2. Practice using Paxedit in practice.el
-* Installation & Defaults
+* Installation & Usage
 ** Requirements
 1. Emacs 24.1 (may work on lower versions of Emacs, but untested)
 2. Paredit - Paredit mode does not need to be enabled for Paxedit to work. In fact, one could use SmartParens and Paxedit at the same time as long as Paredit is installed.
@@ -371,7 +391,7 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 (+ 1-!-2)
        #+END_SRC
 ** Debugging
-   1. ~paxedit-macro-expand-replace~ - Expand the current expression if it is macro.
+   1. ~paxedit-macro-expand-replace~ - Expand the current expression in its place if it is macro.
       #+BEGIN_SRC emacs-lisp
 ;;; Example of expanding the anaphoric, "awhen" macro in place.
 (awhen some-value-!-
@@ -391,4 +411,8 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 2. Brett Victor's, Inventing on Principle Talk
 3. Editing Lisp Code - http://c2.com/cgi/wiki?EditingLispCode
 * License
-GNU GPL v3
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
