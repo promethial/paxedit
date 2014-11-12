@@ -1,7 +1,6 @@
 #+TITLE: Paxedit - Peaceful LISP Editing
 #+AUTHOR: Mustafa Shameem
 #+STARTUP: indent
-#+OPTIONS: toc:nil
 #+BEGIN_ABSTRACT
 #+BEGIN_CENTER
 *Summary*
@@ -115,6 +114,7 @@ Tools—software, hardware, or process—should be levers for the mind. Paredit 
 1. Emacs 24.1 (may work on lower versions of Emacs, but untested)
 2. Paredit - Paredit mode does not need to be enabled for Paxedit to work. In fact, one could use SmartParens and Paxedit at the same time as long as Paredit is installed.
 ** MELPA
+Coming soon..
 ** Manual Install
 1. Install the dependencies of Paxedit
    1. Paredit
@@ -129,13 +129,8 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 ** Customization
 1. Prevent whitespace and alignment cleanup. By default Paxedit fixes whitespace and alignment issues left over from refactoring. This functionality by default is enabled, but can be disabled.
    #+BEGIN_SRC emacs-lisp
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(paxedit-alignment-cleanup nil))
-#+END_SRC
+(setf paxedit-alignment-cleanup nil)
+   #+END_SRC
 2. Adding new implicit functions.
    #+BEGIN_SRC emacs-lisp
 ;;; Function with implicit strucutre of two starting
@@ -363,7 +358,7 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 ;;; expression causes the comment to be removed.
 (comment (message -!-"hello world")) ⟹ (message -!-"hello world")
       #+END_SRC
-   10. ~paxedit-cleanup~ - Indent the buffer according to the rules of the LISP mode.
+   10. ~paxedit-cleanup~ - Indent the buffer according to the rules of the current mode.
    11. ~paxedit-delete-whitespace~ - Delete all whitespace to the right and left of the cursor.
        #+BEGIN_SRC emacs-lisp
 ;;; Collapses the whitespace and newlines on both sides of the cursor
