@@ -128,7 +128,7 @@
 
 (add-hook 'clojure-mode-hook
           (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-clojure
-                                     paxedit-sexp-implicit-structures paxedit-implicit-structures-clojure))))
+                                paxedit-sexp-implicit-structures paxedit-implicit-structures-clojure))))
 
 ;;; Paxedit Defaults
 
@@ -172,7 +172,7 @@
 (defvar paxedit-symbol-separator-regex (concat paxedit-symbol-separator)
   "Separators that indicate symbol boundary")
 
-(defvar paxedit-cursor-preserve-random "|||~~@@@@\\\\~**++&34859348576935&++&**~////@@@@~~~|||"
+(defvar paxedit-cursor-preserve-random "**$$**$$"
   "Unique string to allow preservation of cursor position")
 
 ;;; MS Library
@@ -227,7 +227,7 @@ e.g. FORM (message) is the same as FORM message"
   "Anaphoric when expression."
   (declare (indent 1))
   `(paxedit-aif ,test-form
-                (progn ,@then-forms)))
+       (progn ,@then-forms)))
 
 ;;; General Functions
 
@@ -285,12 +285,12 @@ e.g. FORM (message) is the same as FORM message"
 (defun paxedit-regex-string-region (regex string &optional start)
   "Returns the region of the substring in STRING that statisfies REGEX."
   (paxedit-awhen (string-match regex string start)
-                 (cons it (match-end 0))))
+    (cons it (match-end 0))))
 
 (defun paxedit-regex-string (regex string &optional start)
   "Returns the first substring in STRING that statisfies REGEX."
   (paxedit-awhen (paxedit-regex-string-region regex string start)
-                 (paxedit-substring-from-region string it)))
+    (paxedit-substring-from-region string it)))
 
 (defun paxedit-regex-match? (regex &rest strings)
   "Verifies all STRINGS match the REGEX."
@@ -413,9 +413,9 @@ we hold these truths
 we hold These Truths
 ---------- Buffer: foo ----------"
   (paxedit-awhen (paxedit-region-string region)
-                 (paxedit-region-delete region)
-                 (save-excursion (goto-char rstart)
-                                 (insert (funcall func it)))))
+    (paxedit-region-delete region)
+    (save-excursion (goto-char rstart)
+                    (insert (funcall func it)))))
 
 (defun paxedit-preserve-place ()
   "Insert a unique string to preserve the current cursor position."
@@ -526,7 +526,7 @@ e.g. '-!-(message \"hello\") --> -!-'(message \"hello\")"
   "Return the symbol in the functional position under the condition cursor point is at SEXP core start."
   (paxedit-sexp-core-move-istart) ; Account for case where there is extra whitespace in front of functional symbol
   (paxedit-awhen (paxedit-get-current-symbol)     ; If there is a symbol in the functional position intern and return
-                 (intern it)))
+    (intern it)))
 
 (defun-paxedit-excursion paxedit-sexp-parent-function-symbol ()
   "Return function symbol of the parent SEXP."
@@ -541,13 +541,13 @@ e.g. '-!-(message \"hello\") --> -!-'(message \"hello\")"
 (defun-paxedit-excursion paxedit-sexp-core-region ()
   "Return core SEXP region."
   (paxedit-awhen (paxedit-sexp-move-to-core-start)
-                 (cons it (paxedit-sexp-core-get-end-point))))
+    (cons it (paxedit-sexp-core-get-end-point))))
 
 (defun-paxedit-excursion paxedit-sexp-region (&optional n)
   "Return region of current SEXP."
   (paxedit-awhen (paxedit-sexp-move-to-core-start n)
-                 (cons (paxedit-sexp-core-get-start-point)
-                       (paxedit-sexp-core-get-end-point))))
+    (cons (paxedit-sexp-core-get-start-point)
+          (paxedit-sexp-core-get-end-point))))
 
 (defun paxedit-sexp-core-get-type ()
   "Return SEXP start symbol. e.g. (, \", {, [."
@@ -631,10 +631,10 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
 (defun-paxedit-excursion paxedit-cxt-sexp-enumerate (context)
   "Return an alist which contains regions (START . END) of every form contained within the parent SEXP."
   (paxedit-awhen (paxedit-cxt-cboundary context)
-                 (paxedit-cxt-move-istart context)
-                 (cl-loop do (paxedit-sexp-forward)
-                          until (= (cl-rest it) (point))
-                          collect (cons (save-excursion (paxedit-sexp-backward)) (point)))))
+    (paxedit-cxt-move-istart context)
+    (cl-loop do (paxedit-sexp-forward)
+             until (= (cl-rest it) (point))
+             collect (cons (save-excursion (paxedit-sexp-backward)) (point)))))
 
 ;;; Symbol Functions
 
@@ -654,7 +654,7 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-get-current-symbol ()
   "Return the symbol the cursor is on or next to. If no symbol is found return nil."
   (paxedit-awhen (paxedit-symbol-current-boundary)
-                 (buffer-substring (cl-first it) (cl-rest it))))
+    (buffer-substring (cl-first it) (cl-rest it))))
 
 (defun paxedit-move-to-symbol (forwardp)
   "Move backward or forward a symbol."
@@ -677,8 +677,8 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-symbol-cursor-within? ()
   "Return true if the cursors is within the symbol, and not at the left or right boundary of the symbol."
   (paxedit-awhen (paxedit-symbol-current-boundary)
-                 (when (paxedit-region-contains-point-exclude-boundary it (point))
-                   it)))
+    (when (paxedit-region-contains-point-exclude-boundary it (point))
+      it)))
 
 ;;; Comment Functions
 
@@ -751,8 +751,8 @@ e.g. some-function-name, 123, 12_234."
   "Get the region of the current implicit SEXP."
   (paxedit-awhen (paxedit-nth-satisfies (paxedit-get context :implicit-shape)
                                         (lambda (x) (paxedit-region-contains-point x (point))))
-                 (elt (paxedit-get context :implicit-shape)
-                      it)))
+    (elt (paxedit-get context :implicit-shape)
+         it)))
 
 ;;; Cleanup Functions
 ;;; SEXP Deletion Cleanup
@@ -830,36 +830,36 @@ e.g. some-function-name, 123, 12_234."
   "Copy the symbol the cursor is on or next to."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
-               (paxedit-region-copy it)
-               (message "No symbol found to copy")))
+      (paxedit-region-copy it)
+    (message "No symbol found to copy")))
 
 (defun paxedit-symbol-kill ()
   "Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
-               (progn (paxedit-region-kill it)
-                      (paxedit-whitespace-clean-context))
-               (message "No symbol found to kill")))
+      (progn (paxedit-region-kill it)
+             (paxedit-whitespace-clean-context))
+    (message "No symbol found to kill")))
 
 (defun paxedit-symbol-change-case ()
   "Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
-               (funcall (if (let ((case-fold-search nil))
-                              (string-match-p "[a-z]" (paxedit-region-string it)))
-                            'upcase-region
-                          'downcase-region)
-                        (cl-first it)
-                        (cl-rest it))
-               (message "No symbol found to uppercase")))
+      (funcall (if (let ((case-fold-search nil))
+                     (string-match-p "[a-z]" (paxedit-region-string it)))
+                   'upcase-region
+                 'downcase-region)
+               (cl-first it)
+               (cl-rest it))
+    (message "No symbol found to uppercase")))
 
 (defun paxedit-symbol-occur ()
   "Search for symbol the cursor is on or next to in the current buffer with occur."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
-               (progn (occur (paxedit-region-string it))
-                      (other-window 1))
-               (message "No symbol found to search with")))
+      (progn (occur (paxedit-region-string it))
+             (other-window 1))
+    (message "No symbol found to search with")))
 
 (defun paxedit-next-symbol (&optional n)
   "Go to the next symbol."
@@ -881,10 +881,10 @@ e.g. some-function-name, 123, 12_234."
   "Kill the comment if the cursor is on."
   (interactive)
   (paxedit-awhen (paxedit-comment-check-context)
-                 (when (paxedit-region-contains-point it (point))
-                   (paxedit-region-kill it)
-                   (paxedit-whitespace-clean)
-                   t)))
+    (when (paxedit-region-contains-point it (point))
+      (paxedit-region-kill it)
+      (paxedit-whitespace-clean)
+      t)))
 
 (defun paxedit-comment-align-all ()
   "Align all the comments from the point of the cursor onwards."
@@ -933,9 +933,9 @@ e.g. some-function-name, 123, 12_234."
   "Kill current s-expression and any extraneous white space left over from deletion. If deletion is success returns true else nil."
   (interactive "p")
   (paxedit-awhen (paxedit-sexp-region n)
-                 (paxedit-region-kill it)
-                 (paxedit-sexp-removal-cleanup)
-                 t))
+    (paxedit-region-kill it)
+    (paxedit-sexp-removal-cleanup)
+    t))
 
 (defun paxedit-whitespace-clean-context ()
   "Clean whitespace with account for special cases. After deletion if there is another expression on the same line indent the expression. If there is no code or end delimiters consolidate with the line above."
@@ -950,35 +950,36 @@ e.g. some-function-name, 123, 12_234."
   "Kill the implicit SEXP if present."
   (interactive "p")
   (paxedit-awhen (paxedit-context-generate)
-                 (when (paxedit-cxt-implicit-sexp? it)
-                   (let ((nth-isexp (paxedit-nth-satisfies (paxedit-get it :implicit-shape)
-                                                           (lambda (x) (paxedit-region-contains-point x (point))))))
-                     (when nth-isexp
-                       (paxedit-region-kill (elt (paxedit-get it :implicit-shape) nth-isexp))
-                       (paxedit-whitespace-clean-context)
-                       t)))))
+    (when (paxedit-cxt-implicit-sexp? it)
+      (let ((nth-isexp (paxedit-nth-satisfies (paxedit-get it :implicit-shape)
+                                              (lambda (x) (paxedit-region-contains-point x (point))))))
+        (when nth-isexp
+          (paxedit-region-kill (elt (paxedit-get it :implicit-shape) nth-isexp))
+          (paxedit-whitespace-clean-context)
+          t)))))
 
 (defun paxedit-sexp-delete (&optional n)
   "Delete current s-expression and any extraneous white space left over from deletion. If deletion is success returns true else nil."
   (interactive "p")
   (paxedit-awhen (paxedit-sexp-region n)
-                 (paxedit-region-delete it)
-                 (paxedit-sexp-removal-cleanup)
-                 t))
+    (paxedit-region-delete it)
+    (paxedit-sexp-removal-cleanup)
+    t))
 
 (defun paxedit-sexp-raise ()
   "Raises the expression the cursor is in while perserving the cursor location."
   (interactive)
   (if (paxedit-symbol-cursor-within?)
-      (progn (goto-char (cl-first (paxedit-symbol-current-boundary)))
-             (paredit-raise-sexp)
+      (progn (paxedit-cursor (paxedit-symbol-current-boundary)
+                             (goto-char (cl-first (paxedit-symbol-current-boundary)))
+                             (paredit-raise-sexp))
              (paxedit-reindent-defun))
     (paxedit-aif (paxedit-sexp-core-region)
-                 (progn (paxedit-cursor it
-                                        (goto-char (cl-first region))
-                                        (paredit-raise-sexp))
-                        (paxedit-reindent-defun))
-                 (message "No SEXP found to raise."))))
+        (progn (paxedit-cursor it
+                               (goto-char (cl-first region))
+                               (paredit-raise-sexp))
+               (paxedit-reindent-defun))
+      (message "No SEXP found to raise."))))
 
 (defun paxedit-wrap-function (function-name region)
   "Wrap FUNCTION-NAME around some REGION."
@@ -990,9 +991,9 @@ e.g. some-function-name, 123, 12_234."
   "Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed."
   (interactive)
   (paxedit-awhen (paxedit-sexp-core-region)
-                 (if (equal 'comment (paxedit-sexp-parent-function-symbol))
-                     (paxedit-sexp-raise)
-                   (paxedit-wrap-function "comment" it))))
+    (if (equal 'comment (paxedit-sexp-parent-function-symbol))
+        (paxedit-sexp-raise)
+      (paxedit-wrap-function "comment" it))))
 
 ;;; Macros
 
@@ -1006,21 +1007,21 @@ e.g. some-function-name, 123, 12_234."
   "Replace the current expression (if there is a macro in the functional position) with its macro expansion."
   (interactive)
   (paxedit-awhen (paxedit-context-generate)
-                 (if (functionp (paxedit-get it :function-symbol))
-                     (message "Function found instead of macro. Macro expansion cannot be done.")
-                   (let* ((sregion (paxedit-get it :region))
-                          (sexp (paxedit-region-string sregion))
-                          (cleanup? (not (paxedit-cxt-topmost-sexp? it)))
-                          original-pos)
-                     (paxedit-region-delete sregion)
-                     (setf original-pos (point))
-                     (when cleanup?
-                       (paxedit-sexp-removal-cleanup))
-                     (eval (read (concat "(paxedit-macroexpand-p " sexp ")")))
-                     (if cleanup?
-                         (paxedit-cleanup)
-                       (save-excursion (goto-char original-pos)
-                                       (delete-char 1)))))))
+    (if (functionp (paxedit-get it :function-symbol))
+        (message "Function found instead of macro. Macro expansion cannot be done.")
+      (let* ((sregion (paxedit-get it :region))
+             (sexp (paxedit-region-string sregion))
+             (cleanup? (not (paxedit-cxt-topmost-sexp? it)))
+             original-pos)
+        (paxedit-region-delete sregion)
+        (setf original-pos (point))
+        (when cleanup?
+          (paxedit-sexp-removal-cleanup))
+        (eval (read (concat "(paxedit-macroexpand-p " sexp ")")))
+        (if cleanup?
+            (indent-according-to-mode)
+          (save-excursion (goto-char original-pos)
+                          (delete-char 1)))))))
 
 ;;; SEXP Refactoring Context
 
@@ -1048,19 +1049,19 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-swap-if-next (current-region next-region-func forwardp error-message)
   "Swap the CURRENT-REGION with the next or previous region based on what the NEXT-REGION-FUNC generates."
   (paxedit-aif (funcall next-region-func forwardp)
-               (paxedit-swap-regions current-region it)
-               (error error-message)))
+      (paxedit-swap-regions current-region it)
+    (error error-message)))
 
 (defun paxedit-context-comment (context)
   "Swap with next or previous comment."
   (paxedit-aif (and context
                     (not (paxedit-cxt-sexp? context))
                     (paxedit-comment-check-context))
-               (paxedit-swap-if-next it
-                                     'paxedit-comment-next-region
-                                     (equal (paxedit-get context :direction) :forward)
-                                     "No comment found to switch with.")
-               context))
+      (paxedit-swap-if-next it
+                            'paxedit-comment-next-region
+                            (equal (paxedit-get context :direction) :forward)
+                            "No comment found to switch with.")
+    context))
 
 (defun paxedit-context-implicit-sexp (context)
   "Swap with next or previous implicit SEXP."
@@ -1115,19 +1116,19 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-implicit-sexp-up (&optional start)
   "Move to the start of the implicit SEXP if START is true, else go to the end of the implicit SEXP."
   (paxedit-awhen (paxedit-context-generate)
-                 (paxedit-awhen (and (paxedit-cxt-implicit-sexp? it)
-                                     (paxedit-cxt-implicit-get-current-sexp it))
-                                (when (paxedit-region-contains-point-exclude-boundary it (point))
-                                  (goto-char (if start
-                                                 (cl-first it)
-                                               (cl-rest it)))))))
+    (paxedit-awhen (and (paxedit-cxt-implicit-sexp? it)
+                        (paxedit-cxt-implicit-get-current-sexp it))
+      (when (paxedit-region-contains-point-exclude-boundary it (point))
+        (goto-char (if start
+                       (cl-first it)
+                     (cl-rest it)))))))
 
 (defun paxedit-comment-backward (direction)
   "Move to the start or end of the comment."
   (paxedit-awhen (paxedit-comment-check-context)
-                 (goto-char (funcall (if (eq direction :start)
-                                         'cl-first
-                                       'cl-rest) it))))
+    (goto-char (funcall (if (eq direction :start)
+                            'cl-first
+                          'cl-rest) it))))
 
 (defun paxedit-implicit-backward-up (&optional n)
   "Move to the start of the implicit SEXP."
@@ -1141,27 +1142,27 @@ e.g. some-function-name, 123, 12_234."
   "Faster version of the default paredit close round and newline procedure."
   (interactive)
   (paxedit-awhen (paxedit-context-generate)
-                 (goto-char (cl-rest (paxedit-get it :region)))
-                 (paredit-newline)
-                 (pcase (paxedit-get it :sexp-type)
-                   (?\( (paredit-open-round))
-                   (?\{ (paredit-open-curly))
-                   (?\[ (paredit-open-bracket))
-                   (?\" (paredit-doublequote)))))
+    (goto-char (cl-rest (paxedit-get it :region)))
+    (paredit-newline)
+    (pcase (paxedit-get it :sexp-type)
+      (?\( (paredit-open-round))
+      (?\{ (paredit-open-curly))
+      (?\[ (paredit-open-bracket))
+      (?\" (paredit-doublequote)))))
 
 (defun paxedit-function-goto-definition ()
   "Split the current window and display the definition of the function."
   (interactive)
   (paxedit-awhen (paxedit-sexp-function-symbol)
-                 (select-window (split-window-right))
-                 (find-function it)))
+    (select-window (split-window-right))
+    (find-function it)))
 
 (defun paxedit-sexp-close-newline ()
   "Faster version of the default paredit close round and newline procedure."
   (interactive)
   (paxedit-awhen (paxedit-sexp-region)
-                 (goto-char (cl-rest it))
-                 (paredit-newline)))
+    (goto-char (cl-rest it))
+    (paredit-newline)))
 
 ;;; Context Orchestration
 

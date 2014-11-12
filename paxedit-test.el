@@ -357,7 +357,7 @@ when t '-!-(+ 1 2))" "(
               ("(1+ (+ 1 2
  (+ 2-!- 3)))" "(1+ (+ 2-!- 3))")
               ("-!-" "-!-")
-              ("(concat user-me-!-ssage name)" "-!-user-message"))
+              ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
   (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
                         (paxedit-sexp-raise)))
                ("-!-" "message:: No SEXP found to raise.")))
