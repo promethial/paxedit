@@ -33,7 +33,7 @@ Paxedit takes a departure from the above manual state of code editing through au
  - [[#license][License]]
 
 * Demo
-1. [[https://www.youtube.com/watch?v%3DvI1l-oC7HvI][Watch a demo of Paxedit on Youtube.]]
+1. [[https://www.youtube.com/watch?v=vI1l-oC7HvI][Watch a demo of Paxedit on Youtube.]]
 2. Practice using Paxedit in ~practice.el~.
 
 * Introduction
