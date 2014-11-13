@@ -8,7 +8,7 @@
 ;; Created: November 2, 2014
 ;; Version: 1.0.0
 ;; Keywords: lisp, refactoring, context
-;; Package-Requires: ((cl-lib "0.5") (paredit "20130722.1324"))
+;; Package-Requires: ((cl-lib "0.5") (paredit "23"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
