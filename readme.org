@@ -137,7 +137,7 @@ Tools—software, hardware, or process—should be levers for the mind. Paredit 
 2. Paredit Version 23 (on MELPA Stable) - Paredit mode does not need to be enabled for Paxedit to work. In fact, one could use SmartParens and Paxedit at the same time as long as Paredit is installed.
 3. [[https://github.com/promethial/xtest][XTest Library]] (Optional, for those interested in modifying Paxedit. Highly recommend downloading this library to leverage existing unit tests written for Paxedit).
 ** MELPA
-Coming soon..
+Available to install via Melpa.
 ** Manual Install
 1. Install the dependencies of Paxedit
    1. Paredit
