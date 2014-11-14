@@ -130,7 +130,7 @@ Paxedit understands functions with implicit associations among its arguments (th
 ** Rationale
 Paxedit eliminates the work, tedium, and mistakes involved with manual editing and refactoring LISP code.
 
-Tools—software, hardware, or process—should be levers for the mind. Paredit for Emacs is a great example. It lifts the need for the user to think about the keeping parenthesis balanced, since it enforces balanced parenthe- sis as a default and forces one to use the built in mechanisms to manipulate symbolic expressions which are guaranteed to stay balanced. This removes a large source of errors. So much so that, personally, I can’t remember a time where unbalanced parenthesis caused issues in my code. Useful tools allow the user to stop focusing on the incidental, the mechanics, and simply do the task at hand. Paxedit allows the user to forget about the mechanics and incidental details of refactoring SEXPs, strings, symbols, and comments.
+Tools—software, hardware, or process—should be levers for the mind. Paredit for Emacs is a great example. It lifts the need for the user to think about the keeping parenthesis balanced, since it enforces balanced parenthesis as a default and forces one to use the built in mechanisms to manipulate symbolic expressions which are guaranteed to stay balanced. This removes a large source of errors. Personally, I can’t remember a time when unbalanced parenthesis caused issues in my own code. Useful tools allow the user to stop focusing on the incidental, the mechanics, and simply do the task at hand. Paxedit allows the user to forget about the mechanics and incidental details of refactoring SEXPs, strings, symbols, and comments.
 * Installation & Usage
 ** Requirements
 1. Emacs 24.1 or greater (may work on lower versions of Emacs, but untested)
@@ -147,10 +147,6 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 #+BEGIN_SRC emacs-lisp
 ;;; Load paxedit functionality
 (require 'paxedit)
-
-;;; Or load paxedit functionality in specific mode
-(add-hook 'emacs-lisp-mode-hook
-          (lambda () (require 'paxedit)))
 #+END_SRC
 ** Customization
 1. Prevent whitespace and alignment cleanup. By default Paxedit fixes whitespace and alignment issues left over from refactoring. This functionality by default is enabled, but can be disabled.
@@ -169,8 +165,8 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 ;;; at the second argument.
 
 (some-function2 ignored-symbol
-                first 1 "one"
-                second 2 "two")
+                'first 1 "one"
+                'second 2 "two")
 
 (add-to-list 'paxedit-implicit-functions-elisp '((some-function . (1 2))
                                                  (some-function2 . (2 3))))
