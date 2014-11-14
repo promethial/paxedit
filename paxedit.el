@@ -121,14 +121,14 @@
 (defvar paxedit-sexp-implicit-structures nil
   "Internal implicit structure.")
 
-;;; Default Hooks
-
-(add-hook 'emacs-lisp-mode-hook
-          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-elisp))))
-
-(add-hook 'clojure-mode-hook
-          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-clojure
-                                paxedit-sexp-implicit-structures paxedit-implicit-structures-clojure))))
+;;; Default Major Mode Associations
+(defvar paxedit-assoc `((emacs-lisp-mode . (,paxedit-implicit-functions-elisp
+                                            ;; Elisp does not have any
+                                            ;; implicit strucutrues
+                                            nil))
+                        (clojure-mode . (,paxedit-implicit-functions-clojure
+                                         ,paxedit-implicit-structures-clojure)))
+  "Associate major mode with implicit functions and strucuture.")
 
 ;;; Paxedit Defaults
 
@@ -1246,6 +1246,24 @@ e.g. some-function-name, 123, 12_234."
   "Swaps the current explicit, implicit expression, symbol, or comment backward depending on what the cursor is on and what is available to swap with. Swaps in the opposite direction of paxedit-transpose-forward."
   (interactive "p")
   (paxedit-context-refactor-sexp :backward n))
+
+;;; Associating Major Mode with Implicit SEXP
+
+(defun paxedit--associate-major-mode-to-implicit-sexp ()
+  "Associate major mode with certain implicit functions and structures."
+  (paxedit-awhen (cl-rest (assq major-mode paxedit-assoc))
+    (setq-local paxedit-sexp-implicit-functions (cl-first it))
+    (setq-local paxedit-sexp-implicit-structures (cl-second it))))
+
+;;; Setting Up Minor Mode
+
+;;;###autoload
+(define-minor-mode paxedit-mode
+  "Mode to enable Paxedit functionality and maintain keybindings."
+  :init-value nil
+  :lighter " Paxedit"
+  :group paxedit
+  (paxedit--associate-major-mode-to-implicit-sexp))
 
 (provide 'paxedit)
 ;;; paxedit.el ends here
