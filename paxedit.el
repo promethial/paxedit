@@ -931,7 +931,6 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-sexp-kill (&optional n)
   "Kill current s-expression and any extraneous white space left over from deletion. If deletion is success returns true else nil."
-  (interactive "p")
   (paxedit-awhen (paxedit-sexp-region n)
     (paxedit-region-kill it)
     (paxedit-sexp-removal-cleanup)
@@ -948,7 +947,6 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-implicit-sexp-kill (&optional n)
   "Kill the implicit SEXP if present."
-  (interactive "p")
   (paxedit-awhen (paxedit-context-generate)
     (when (paxedit-cxt-implicit-sexp? it)
       (let ((nth-isexp (paxedit-nth-satisfies (paxedit-get it :implicit-shape)
