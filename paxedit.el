@@ -1262,6 +1262,7 @@ e.g. some-function-name, 123, 12_234."
   "Mode to enable Paxedit functionality and maintain keybindings."
   :init-value nil
   :lighter " Paxedit"
+  :keymap (make-sparse-keymap)
   :group paxedit
   (paxedit--associate-major-mode-to-implicit-sexp))
 
