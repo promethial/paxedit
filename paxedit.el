@@ -6,7 +6,7 @@
 ;; Maintainer: Mustafa Shameem
 ;; URL: https://github.com/promethial/paxedit
 ;; Created: November 2, 2014
-;; Version: 1.0.0
+;; Version: 1.1.0
 ;; Keywords: lisp, refactoring, context
 ;; Package-Requires: ((cl-lib "0.5") (paredit "23"))
 
@@ -121,14 +121,14 @@
 (defvar paxedit-sexp-implicit-structures nil
   "Internal implicit structure.")
 
-;;; Default Hooks
-
-(add-hook 'emacs-lisp-mode-hook
-          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-elisp))))
-
-(add-hook 'clojure-mode-hook
-          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-clojure
-                                paxedit-sexp-implicit-structures paxedit-implicit-structures-clojure))))
+;;; Default Major Mode Associations
+(defvar paxedit-assoc `((emacs-lisp-mode . (,paxedit-implicit-functions-elisp
+                                            ;; Elisp does not have any
+                                            ;; implicit strucutrues
+                                            nil))
+                        (clojure-mode . (,paxedit-implicit-functions-clojure
+                                         ,paxedit-implicit-structures-clojure)))
+  "Associate major mode with implicit functions and strucuture.")
 
 ;;; Paxedit Defaults
 
@@ -472,7 +472,6 @@ we hold These Truths
 
 (defun paxedit-region-dimension ()
   "Function used for debugging purposes to confirm if region generated is what is expected"
-  (interactive)
   (message (format "(%d . %d)"
                    (region-beginning)
                    (region-end))))
@@ -779,32 +778,38 @@ e.g. some-function-name, 123, 12_234."
 
 ;;; SEXP Structure & Alignment Cleanup
 
+;;;###autoload
 (defun paxedit-whitespace-delete-left ()
   "Delete all the whitespace on the left side until a non-space character is encountered."
   (interactive)
   (paxedit-whitespace-clean))
 
+;;;###autoload
 (defun paxedit-whitespace-delete-right ()
   "Delete all the whitespace on the right side until a non-space character is encountered."
   (interactive)
   (paxedit-whitespace-clean t))
 
+;;;###autoload
 (defun paxedit-delete-whitespace ()
-  "Kill all whitespace to the left and right of the cursor."
+  "Delete all whitespace to the left and right of the cursor."
   (interactive)
   (paxedit-whitespace-clean t)
   (paxedit-whitespace-clean))
 
+;;;###autoload
 (defun paxedit-untabify-buffer ()
   "Remove all tabs in the buffer."
   (interactive)
   (untabify (point-min) (point-max)))
 
+;;;###autoload
 (defun paxedit-indent-buffer ()
   "Re-indent buffer."
   (interactive)
   (indent-region (point-min) (point-max)))
 
+;;;###autoload
 (defun paxedit-cleanup ()
   "Indent buffer as defined by mode, remove tabs, and delete trialing whitespace."
   (interactive)
@@ -816,16 +821,19 @@ e.g. some-function-name, 123, 12_234."
 
 ;;; Symbol Navigation & Manipulation
 
+;;;###autoload
 (defun paxedit-goto-start-of-symbol ()
   "Go to the start of the current symbol."
   (interactive)
   (goto-char (cl-first (paxedit-symbol-current-boundary))))
 
+;;;###autoload
 (defun paxedit-goto-end-of-symbol ()
   "Go to the end of the current symbol."
   (interactive)
   (goto-char (cl-rest (paxedit-symbol-current-boundary))))
 
+;;;###autoload
 (defun paxedit-symbol-copy ()
   "Copy the symbol the cursor is on or next to."
   (interactive)
@@ -833,6 +841,7 @@ e.g. some-function-name, 123, 12_234."
       (paxedit-region-copy it)
     (message "No symbol found to copy")))
 
+;;;###autoload
 (defun paxedit-symbol-kill ()
   "Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill."
   (interactive)
@@ -841,6 +850,7 @@ e.g. some-function-name, 123, 12_234."
              (paxedit-whitespace-clean-context))
     (message "No symbol found to kill")))
 
+;;;###autoload
 (defun paxedit-symbol-change-case ()
   "Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol."
   (interactive)
@@ -853,6 +863,7 @@ e.g. some-function-name, 123, 12_234."
                (cl-rest it))
     (message "No symbol found to uppercase")))
 
+;;;###autoload
 (defun paxedit-symbol-occur ()
   "Search for symbol the cursor is on or next to in the current buffer with occur."
   (interactive)
@@ -861,6 +872,7 @@ e.g. some-function-name, 123, 12_234."
              (other-window 1))
     (message "No symbol found to search with")))
 
+;;;###autoload
 (defun paxedit-next-symbol (&optional n)
   "Go to the next symbol."
   (interactive "p")
@@ -868,6 +880,7 @@ e.g. some-function-name, 123, 12_234."
   (dotimes (_ n)
     (paxedit-move-to-symbol t)))
 
+;;;###autoload
 (defun paxedit-previous-symbol (&optional n)
   "Go to the previous symbol."
   (interactive "p")
@@ -879,13 +892,13 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-comment-kill ()
   "Kill the comment if the cursor is on."
-  (interactive)
   (paxedit-awhen (paxedit-comment-check-context)
     (when (paxedit-region-contains-point it (point))
       (paxedit-region-kill it)
       (paxedit-whitespace-clean)
       t)))
 
+;;;###autoload
 (defun paxedit-comment-align-all ()
   "Align all the comments from the point of the cursor onwards."
   (interactive)
@@ -896,18 +909,21 @@ e.g. some-function-name, 123, 12_234."
 
 ;;; SEXP
 
+;;;###autoload
 (defun paxedit-sexp-backward-up (n)
   "Go to the start of the containing parent expression."
   (interactive "p")
   (unless (paxedit-sexp-move-to-core-start n)
     (paxedit-sexp-backward n)))
 
+;;;###autoload
 (defun paxedit-sexp-backward-end (&optional n)
   "Go to the end of the containing parent expression."
   (interactive "p")
   (paxedit-sexp-move-to-core-start n)
   (paxedit-sexp-forward))
 
+;;;###autoload
 (defun paxedit-quoted-open-round ()
   "Insert quoted open round."
   (interactive)
@@ -916,12 +932,14 @@ e.g. some-function-name, 123, 12_234."
     (cl-decf (point))
     (insert ?')))
 
+;;;###autoload
 (defun paxedit-close-sexp-newline ()
   "Close current round and newline. Faster version of the default paredit close round and newline procedure."
   (interactive)
   (paxedit-sexp-backward-end)
   (paredit-newline))
 
+;;;###autoload
 (defun paxedit-close-sexp-newline-round ()
   "Close the current expression, create a newline, and create a new parenthesis pair."
   (interactive)
@@ -931,7 +949,6 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-sexp-kill (&optional n)
   "Kill current s-expression and any extraneous white space left over from deletion. If deletion is success returns true else nil."
-  (interactive "p")
   (paxedit-awhen (paxedit-sexp-region n)
     (paxedit-region-kill it)
     (paxedit-sexp-removal-cleanup)
@@ -948,7 +965,6 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-implicit-sexp-kill (&optional n)
   "Kill the implicit SEXP if present."
-  (interactive "p")
   (paxedit-awhen (paxedit-context-generate)
     (when (paxedit-cxt-implicit-sexp? it)
       (let ((nth-isexp (paxedit-nth-satisfies (paxedit-get it :implicit-shape)
@@ -960,12 +976,12 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-sexp-delete (&optional n)
   "Delete current s-expression and any extraneous white space left over from deletion. If deletion is success returns true else nil."
-  (interactive "p")
   (paxedit-awhen (paxedit-sexp-region n)
     (paxedit-region-delete it)
     (paxedit-sexp-removal-cleanup)
     t))
 
+;;;###autoload
 (defun paxedit-sexp-raise ()
   "Raises the expression the cursor is in while perserving the cursor location."
   (interactive)
@@ -987,6 +1003,7 @@ e.g. some-function-name, 123, 12_234."
                   (paxedit-region-modify region (lambda (region-string) (format "(%s %s)" function-name region-string))))
   (paxedit-reindent-defun))
 
+;;;###autoload
 (defun paxedit-wrap-comment ()
   "Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed."
   (interactive)
@@ -1003,6 +1020,7 @@ e.g. some-function-name, 123, 12_234."
           ;; Remove the extra newline introduced by cl-prettyprint
           (delete-char 1)))
 
+;;;###autoload
 (defun paxedit-macro-expand-replace ()
   "Replace the current expression (if there is a macro in the functional position) with its macro expansion."
   (interactive)
@@ -1138,6 +1156,7 @@ e.g. some-function-name, 123, 12_234."
   "Move to the end of the implicit SEXP."
   (paxedit-implicit-sexp-up nil))
 
+;;;###autoload
 (defun paxedit-sexp-close-statement ()
   "Faster version of the default paredit close round and newline procedure."
   (interactive)
@@ -1150,6 +1169,7 @@ e.g. some-function-name, 123, 12_234."
       (?\[ (paredit-open-bracket))
       (?\" (paredit-doublequote)))))
 
+;;;###autoload
 (defun paxedit-function-goto-definition ()
   "Split the current window and display the definition of the function."
   (interactive)
@@ -1157,6 +1177,7 @@ e.g. some-function-name, 123, 12_234."
     (select-window (split-window-right))
     (find-function it)))
 
+;;;###autoload
 (defun paxedit-sexp-close-newline ()
   "Faster version of the default paredit close round and newline procedure."
   (interactive)
@@ -1176,6 +1197,7 @@ e.g. some-function-name, 123, 12_234."
 
 ;;; Context Sensitive Start
 
+;;;###autoload
 (defun paxedit-backward-up (&optional n)
   "Move to the start of the explicit expression, implicit expression or comment."
   (interactive "p")
@@ -1184,6 +1206,7 @@ e.g. some-function-name, 123, 12_234."
         (paxedit-implicit-backward-up)
         (paxedit-sexp-backward-up 1))))
 
+;;;###autoload
 (defun paxedit-backward-end (&optional n)
   "Move to the end of the explicit expression, implicit expression or comment."
   (interactive "p")
@@ -1192,13 +1215,21 @@ e.g. some-function-name, 123, 12_234."
         (paxedit-implicit-backward-down)
         (paxedit-sexp-backward-end))))
 
+;;;###autoload
 (defun paxedit-backward-up-2 (&optional n)
-  "Go up expressions by multiples of two."
+  "Go up expressions by multiples of two and place cursor at start of context."
   (interactive "p")
   (paxedit-backward-up (* 2 n)))
 
+;;;###autoload
+(defun paxedit-backward-end-2 (&optional n)
+  "Go up expressions by multiples of two and place cursor at end of context."
+  (interactive "p")
+  (paxedit-backward-end (* 2 n)))
+
 ;;; Context Dependent New Statement
 
+;;;###autoload
 (defun paxedit-context-new-statement (&optional n)
   "Create a new SEXP depending on the context."
   (interactive "p")
@@ -1206,6 +1237,7 @@ e.g. some-function-name, 123, 12_234."
 
 ;;; Context Dependent Goto Definition
 
+;;;###autoload
 (defun paxedit-context-goto-definition ()
   "Go to the function definition."
   (interactive)
@@ -1213,6 +1245,7 @@ e.g. some-function-name, 123, 12_234."
 
 ;;; Context Dependent Kill, Copy, and Delete
 
+;;;###autoload
 (defun paxedit-kill (&optional n)
   "Kill current explicit expression, implicit expression, or comment. Also cleans up left-over whitespace from kill and corrects indentation."
   (interactive "p")
@@ -1221,6 +1254,7 @@ e.g. some-function-name, 123, 12_234."
       (paxedit-sexp-kill n)
       (message paxedit-message-kill)))
 
+;;;###autoload
 (defun paxedit-copy (&optional n)
   "Copy current explicit expression, implicit expression, or comment."
   (interactive "p")
@@ -1228,6 +1262,7 @@ e.g. some-function-name, 123, 12_234."
             (paxedit-message-kill paxedit-message-copy))
     (paxedit-kill n)))
 
+;;;###autoload
 (defun paxedit-delete (&optional n)
   "Delete current explicit expression, implicit expression, or comment. Also cleans up the left-over whitespace from deletion and corrects indentation."
   (interactive "p")
@@ -1237,15 +1272,36 @@ e.g. some-function-name, 123, 12_234."
 
 ;;; Context Dependent Transpose
 
+;;;###autoload
 (defun paxedit-transpose-forward (&optional n)
   "Swap the current explicit expression, implicit expression, symbol, or comment forward depending on what the cursor is on and what is available to swap with. This command is very versatile and will do the \"right\" thing in each context."
   (interactive "p")
   (paxedit-context-refactor-sexp :forward n))
 
+;;;###autoload
 (defun paxedit-transpose-backward (&optional n)
   "Swaps the current explicit, implicit expression, symbol, or comment backward depending on what the cursor is on and what is available to swap with. Swaps in the opposite direction of paxedit-transpose-forward."
   (interactive "p")
   (paxedit-context-refactor-sexp :backward n))
+
+;;; Associating Major Mode with Implicit SEXP
+
+(defun paxedit--associate-major-mode-to-implicit-sexp ()
+  "Associate major mode with certain implicit functions and structures."
+  (paxedit-awhen (cl-rest (assq major-mode paxedit-assoc))
+    (set (make-local-variable 'paxedit-sexp-implicit-functions) (cl-first it))
+    (set (make-local-variable 'paxedit-sexp-implicit-structures) (cl-second it))))
+
+;;; Setting Up Minor Mode
+
+;;;###autoload
+(define-minor-mode paxedit-mode
+  "Mode to enable Paxedit functionality and maintain keybindings."
+  :init-value nil
+  :lighter " Paxedit"
+  :keymap (make-sparse-keymap)
+  :group paxedit
+  (paxedit--associate-major-mode-to-implicit-sexp))
 
 (provide 'paxedit)
 ;;; paxedit.el ends here

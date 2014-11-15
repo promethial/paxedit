@@ -2,6 +2,11 @@
 (require 'xtest)
 (require 'paxedit)
 
+(defun paxedit-test-setup ()
+  "Test setup for Paxedit."
+  (emacs-lisp-mode)
+  (paxedit-mode 1))
+
 (xt-deftest paxedit-region-contains
   (xtd-should 'paxedit-region-contains
               ((1 . 5) (1 . 5))
@@ -126,8 +131,7 @@ when t '-!-(+ 1 2))" "(
               ("move_32342423*^&%$,-!- forward" "-!-move_32342423*^&%$, forward")))
 
 (xt-deftest paxedit-kill
-  (xtd-setup= (lambda (x) (emacs-lisp-mode)
-                (paredit-mode)
+  (xtd-setup= (lambda (x) (paxedit-test-setup)
                 (call-interactively 'paxedit-kill)
                 (goto-char (point-max))
                 (yank))
@@ -164,15 +168,13 @@ when t '-!-(+ 1 2))" "(
                "'art
                 'project;; My Comment-!-"))
   (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                             (emacs-lisp-mode)
-                             (paredit-mode)
+                             (paxedit-test-setup)
                              (call-interactively 'paxedit-kill)))
                ("-!-" "message:: Nothing found to kill in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to kill in this context.")))
 
 (xt-deftest paxedit-delete
-  (xtd-setup= (lambda (x) (emacs-lisp-mode)
-                (paredit-mode)
+  (xtd-setup= (lambda (x) (paxedit-test-setup)
                 (let ((kill-ring nil))
                   (call-interactively 'paxedit-delete)
                   (ignore-errors (yank))))
@@ -200,15 +202,13 @@ when t '-!-(+ 1 2))" "(
                "'art-!-
                 'project"))
   (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                             (emacs-lisp-mode)
-                             (paredit-mode)
+                             (paxedit-test-setup)
                              (call-interactively 'paxedit-delete)))
                ("-!-" "message:: Nothing found to delete in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to delete in this context.")))
 
 (xt-deftest paxedit-transpose-forward
-  (xtd-setup= (lambda (x) (emacs-lisp-mode)
-                (paredit-mode)
+  (xtd-setup= (lambda (x) (paxedit-test-setup)
                 (call-interactively 'paxedit-transpose-forward))
               ;; Symbol Refactoring
               (":o-!-ne :two :three" ":two :o-!-ne :three")
@@ -279,8 +279,7 @@ when t '-!-(+ 1 2))" "(
                 (+ 9 9 9);; Greeting
                 (+ 1 2)
                 ;; -!-Hello World"))
-  (xtd-return= (lambda (x) (emacs-lisp-mode)
-                 (paredit-mode)
+  (xtd-return= (lambda (x) (paxedit-test-setup)
                  (cl-letf (((symbol-function 'message) (lambda (output) (error (concat "message:: " output)))))
                    (condition-case ex
                        (call-interactively 'paxedit-transpose-forward)
@@ -312,8 +311,7 @@ when t '-!-(+ 1 2))" "(
                ("-!-()" nil)))
 
 (xt-deftest paxedit-backward-up
-  (xtd-setup= (lambda (_) (emacs-lisp-mode)
-                (paredit-mode)
+  (xtd-setup= (lambda (_) (paxedit-test-setup)
                 (call-interactively 'paxedit-backward-up))
               ("(when (+ 1-!- 2) t)" "(when -!-(+ 1 2) t)")
               ;; Implicit SEXP backward up tests
@@ -323,16 +321,14 @@ when t '-!-(+ 1 2))" "(
               ("(paxedit-put (paxedit-new) :one 1-!-)" "-!-(paxedit-put (paxedit-new) :one 1)")
               ;; Comment backward up
               (";; hello -!-world" "-!-;; hello world"))
-  (xtd-setup= (lambda (_) (emacs-lisp-mode)
-                (paredit-mode)
+  (xtd-setup= (lambda (_) (paxedit-test-setup)
                 (paxedit-backward-up 2))
               ("(when (+ 1-!- 2) t)" "-!-(when (+ 1 2) t)")
               ;; Implicit SEXP backward up
               ("(paxedit-put (paxedit-new) :one-!- 1)" "-!-(paxedit-put (paxedit-new) :one 1)")))
 
 (xt-deftest paxedit-backward-end
-  (xtd-setup= (lambda (_) (emacs-lisp-mode)
-                (paredit-mode)
+  (xtd-setup= (lambda (_) (paxedit-test-setup)
                 (call-interactively 'paxedit-backward-end))
               ("(when (+ 1-!- 2) t)" "(when (+ 1 2)-!- t)")
               ;; Implicit SEXP backward end
@@ -342,8 +338,7 @@ when t '-!-(+ 1 2))" "(
               ("(paxedit-put (paxedit-new) :one 1-!-)" "(paxedit-put (paxedit-new) :one 1)-!-")
               ;; Comment backward end
               (";; hello-!- world, :D" ";; hello world, :D-!-"))
-  (xtd-setup= (lambda (_) (emacs-lisp-mode)
-                (paredit-mode)
+  (xtd-setup= (lambda (_) (paxedit-test-setup)
                 (paxedit-backward-end 2))
               ("(when (+ 1-!- 2) t)" "(when (+ 1 2) t)-!-")
               ;; Implicit SEXP backward end tests
@@ -359,7 +354,7 @@ when t '-!-(+ 1 2))" "(
               ("-!-" "-!-")
               ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
   (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                        (paxedit-sexp-raise)))
+                             (paxedit-sexp-raise)))
                ("-!-" "message:: No SEXP found to raise.")))
 
 (xt-deftest paxedit-wrap-comment
