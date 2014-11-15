@@ -160,7 +160,14 @@ For Paxedit to work, the user must start the minor mode for Paxedit via ~paxedit
    #+BEGIN_SRC emacs-lisp
 (setf paxedit-alignment-cleanup nil)
    #+END_SRC
-2. Adding new implicit functions.
+2. Suggested default key bindings.
+   #+BEGIN_SRC emacs-lisp
+(eval-after-load "paxedit"
+  '(progn (define-key paxedit-mode-map (kbd "M-<right>") 'paxedit-transpose-forward)
+          (define-key paxedit-mode-map (kbd "M-<left>") 'paxedit-transpose-backward)
+          (define-key paxedit-mode-map (kbd "M-u") 'paxedit-symbol-change-case)))
+   #+END_SRC
+3. Adding new implicit functions.
    #+BEGIN_SRC emacs-lisp
 ;;; Function with implicit strucutre of two starting
 ;;; at first argument.
@@ -183,8 +190,8 @@ For Paxedit to work, the user must start the minor mode for Paxedit via ~paxedit
 
 (add-to-list 'paxedit-implicit-functions-clojure '((some-function . (1 2))
                                                    (some-function2 . (2 3))))
-#+END_SRC
-2. Language specific customization. One can use the logic below to add more languages.
+   #+END_SRC
+4. Language specific customization. One can use the logic below to add more languages.
    #+BEGIN_SRC emacs-lisp
 ;;; Refer to code in Paxedit which defines implicit functions & structures
 ;;; Defining custom implicit functions/macros for ELISP & Clojure shown
@@ -218,7 +225,7 @@ For Paxedit to work, the user must start the minor mode for Paxedit via ~paxedit
 
 ;;; User must define paxedit-implicit-structures-haskell & paxedit-implicit-functions-haskell
 ;;; using the format for paxedit-implicit-functions-elisp
-#+END_SRC
+   #+END_SRC
 * Functionality
 ** Context Navigation
    1. ~paxedit-backward-up~ - Move to the start of the explicit expression, implicit expression or comment.
