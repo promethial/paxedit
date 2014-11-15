@@ -472,7 +472,6 @@ we hold These Truths
 
 (defun paxedit-region-dimension ()
   "Function used for debugging purposes to confirm if region generated is what is expected"
-  (interactive)
   (message (format "(%d . %d)"
                    (region-beginning)
                    (region-end))))
@@ -790,7 +789,7 @@ e.g. some-function-name, 123, 12_234."
   (paxedit-whitespace-clean t))
 
 (defun paxedit-delete-whitespace ()
-  "Kill all whitespace to the left and right of the cursor."
+  "Delete all whitespace to the left and right of the cursor."
   (interactive)
   (paxedit-whitespace-clean t)
   (paxedit-whitespace-clean))
@@ -958,7 +957,6 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-sexp-delete (&optional n)
   "Delete current s-expression and any extraneous white space left over from deletion. If deletion is success returns true else nil."
-  (interactive "p")
   (paxedit-awhen (paxedit-sexp-region n)
     (paxedit-region-delete it)
     (paxedit-sexp-removal-cleanup)
@@ -1191,9 +1189,14 @@ e.g. some-function-name, 123, 12_234."
         (paxedit-sexp-backward-end))))
 
 (defun paxedit-backward-up-2 (&optional n)
-  "Go up expressions by multiples of two."
+  "Go up expressions by multiples of two and place cursor at start of context."
   (interactive "p")
   (paxedit-backward-up (* 2 n)))
+
+(defun paxedit-backward-end-2 (&optional n)
+  "Go up expressions by multiples of two and place cursor at end of context."
+  (interactive "p")
+  (paxedit-backward-end (* 2 n)))
 
 ;;; Context Dependent New Statement
 
