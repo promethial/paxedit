@@ -143,31 +143,34 @@ Available to install via Melpa.
    1. Paredit
 2. Install Paxedit by including ~paxedit.el~ in your path or building the file into a package.
 ** Setup
-Add this to your innit.el, .emacs.d, or other configuration file.
-#+BEGIN_SRC emacs-lisp
+1. Add this to your innit.el, .emacs.d, or other configuration file.
+   #+BEGIN_SRC emacs-lisp
 ;;; Load paxedit functionality
 (require 'paxedit)
-#+END_SRC
-
-For Paxedit to work, the user must start the minor mode for Paxedit via ~paxedit-mode~ interactive function. By default, if you would like to have Paxedit start up automatically with a major mode add the respective hooks (see below).
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-lisp-mode (lambda () (paxedit-mode 1)))
-(add-hook 'clojure-mode (lambda () (paxedit-mode 1)))
-#+END_SRC
+   #+END_SRC
+2. For Paxedit to work, the user must start the minor mode for Paxedit. Run ~paxedit-mode~ interactive function to start minor mode. If you want Paxedit to start automatically with a major mode add the respective hooks (see below).
+   #+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-lisp-mode-hook 'paxedit-mode)
+(add-hook 'clojure-mode-hook 'paxedit-mode)
+   #+END_SRC
+3. Suggested default key bindings.
+   #+BEGIN_SRC emacs-lisp
+(eval-after-load "paxedit"
+  '(progn (define-key paxedit-mode-map (kbd "M-<right>") 'paxedit-transpose-forward)
+          (define-key paxedit-mode-map (kbd "M-<left>") 'paxedit-transpose-backward)
+          (define-key paxedit-mode-map (kbd "M-u") 'paxedit-symbol-change-case)
+          (define-key paxedit-mode-map (kbd "M-f") 'paxedit-next-symbol)
+          (define-key paxedit-mode-map (kbd "M-b") 'paxedit-previous-symbol)
+          (define-key paxedit-mode-map (kbd "C-*") 'paxedit-delete)
+          (define-key paxedit-mode-map (kbd "C-&") 'paxedit-kill)
+          (define-key paxedit-mode-map (kbd "C-^") 'paxedit-sexp-raise)))
+   #+END_SRC
 ** Customization
 1. Prevent whitespace and alignment cleanup. By default Paxedit fixes whitespace and alignment issues left over from refactoring. This functionality by default is enabled, but can be disabled.
    #+BEGIN_SRC emacs-lisp
 (setf paxedit-alignment-cleanup nil)
    #+END_SRC
-2. Suggested default key bindings.
-   #+BEGIN_SRC emacs-lisp
-(eval-after-load "paxedit"
-  '(progn (define-key paxedit-mode-map (kbd "M-<right>") 'paxedit-transpose-forward)
-          (define-key paxedit-mode-map (kbd "M-<left>") 'paxedit-transpose-backward)
-          (define-key paxedit-mode-map (kbd "M-u") 'paxedit-symbol-change-case)))
-   #+END_SRC
-3. Adding new implicit functions.
+2. Adding new implicit functions.
    #+BEGIN_SRC emacs-lisp
 ;;; Function with implicit strucutre of two starting
 ;;; at first argument.
@@ -191,7 +194,7 @@ For Paxedit to work, the user must start the minor mode for Paxedit via ~paxedit
 (add-to-list 'paxedit-implicit-functions-clojure '((some-function . (1 2))
                                                    (some-function2 . (2 3))))
    #+END_SRC
-4. Language specific customization. One can use the logic below to add more languages.
+3. Language specific customization. One can use the logic below to add more languages.
    #+BEGIN_SRC emacs-lisp
 ;;; Refer to code in Paxedit which defines implicit functions & structures
 ;;; Defining custom implicit functions/macros for ELISP & Clojure shown

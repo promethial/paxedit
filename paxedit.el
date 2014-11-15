@@ -6,7 +6,7 @@
 ;; Maintainer: Mustafa Shameem
 ;; URL: https://github.com/promethial/paxedit
 ;; Created: November 2, 2014
-;; Version: 1.0.0
+;; Version: 1.1.0
 ;; Keywords: lisp, refactoring, context
 ;; Package-Requires: ((cl-lib "0.5") (paredit "23"))
 
@@ -1289,8 +1289,8 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit--associate-major-mode-to-implicit-sexp ()
   "Associate major mode with certain implicit functions and structures."
   (paxedit-awhen (cl-rest (assq major-mode paxedit-assoc))
-    (setq-local paxedit-sexp-implicit-functions (cl-first it))
-    (setq-local paxedit-sexp-implicit-structures (cl-second it))))
+    (set (make-local-variable 'paxedit-sexp-implicit-functions) (cl-first it))
+    (set (make-local-variable 'paxedit-sexp-implicit-structures) (cl-second it))))
 
 ;;; Setting Up Minor Mode
 
