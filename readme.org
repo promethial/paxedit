@@ -148,6 +148,13 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 ;;; Load paxedit functionality
 (require 'paxedit)
 #+END_SRC
+
+For Paxedit to work, the user must start the minor mode for Paxedit via ~paxedit-mode~ interactive function. By default, if you would like to have Paxedit start up automatically with a major mode add the respective hooks (see below).
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-lisp-mode (lambda () (paxedit-mode 1)))
+(add-hook 'clojure-mode (lambda () (paxedit-mode 1)))
+#+END_SRC
 ** Customization
 1. Prevent whitespace and alignment cleanup. By default Paxedit fixes whitespace and alignment issues left over from refactoring. This functionality by default is enabled, but can be disabled.
    #+BEGIN_SRC emacs-lisp
@@ -170,8 +177,14 @@ Add this to your innit.el, .emacs.d, or other configuration file.
 
 (add-to-list 'paxedit-implicit-functions-elisp '((some-function . (1 2))
                                                  (some-function2 . (2 3))))
+
+;;; Similarly if we wanted to add these functions to
+;;; Clojure we can do:
+
+(add-to-list 'paxedit-implicit-functions-clojure '((some-function . (1 2))
+                                                   (some-function2 . (2 3))))
 #+END_SRC
-2. Language specific customization.
+2. Language specific customization. One can use the logic below to add more languages.
    #+BEGIN_SRC emacs-lisp
 ;;; Refer to code in Paxedit which defines implicit functions & structures
 ;;; Defining custom implicit functions/macros for ELISP & Clojure shown
@@ -185,16 +198,26 @@ Add this to your innit.el, .emacs.d, or other configuration file.
                                               (paxedit-cond . (1 2))
                                               (paxedit-put . (2 2))))
 
-;;; Associating the perviously defined implict functions with Emacs LISP
+;;; Here is how the association for Elisp & Clojure is setup up
+;;; internally. A major mode is associated with Paxedit, which
+;;; when loaded will setup the buffer local implicit functions
+;;; and structures.
 
-(add-hook 'emacs-lisp-mode-hook
-          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-elisp))))
+(defvar paxedit-assoc `((emacs-lisp-mode . (,paxedit-implicit-functions-elisp
+                                            ;; Elisp does not have any
+                                            ;; implicit strucutrues
+                                            nil))
+                        (clojure-mode . (,paxedit-implicit-functions-clojure
+                                         ,paxedit-implicit-structures-clojure)))
+  "Associate major mode with implicit functions and strucuture.")
 
-;;; Associating the perviously defined implict functions & structures with Clojure
+;;; Adding a new language
 
-(add-hook 'clojure-mode-hook
-          (function (lambda () (setf paxedit-sexp-implicit-functions paxedit-implicit-functions-clojure
-                                paxedit-sexp-implicit-structures paxedit-implicit-structures-clojure))))
+(add-to-list paxedit-assoc `(haskell-mode . (,paxedit-implicit-functions-haskell
+                                             ,paxedit-implicit-structures-haskell)))
+
+;;; User must define paxedit-implicit-structures-haskell & paxedit-implicit-functions-haskell
+;;; using the format for paxedit-implicit-functions-elisp
 #+END_SRC
 * Functionality
 ** Context Navigation
