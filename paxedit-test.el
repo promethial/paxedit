@@ -7,6 +7,11 @@
   (emacs-lisp-mode)
   (paxedit-mode 1))
 
+(defun paxedit-test-clojure-setup ()
+  "Test setup for Paxedit."
+  (clojure-mode)
+  (paxedit-mode 1))
+
 (xt-deftest paxedit-region-contains
   (xtd-should 'paxedit-region-contains
               ((1 . 5) (1 . 5))
@@ -289,6 +294,13 @@ when t '-!-(+ 1 2))" "(
                ("(paxedit-put (paxedit-new)
                         (one 1) 1234
                         :two-!- 2345)" "message:: Nothing found to swap with.")))
+
+(xt-deftest paxedit-transpose-backward-clojure
+  (xtd-setup= (lambda (_) (paxedit-test-clojure-setup)
+                (paxedit-transpose-backward))
+              ("{:a 1 :b-!- 2}" "{:b-!- 2 :a 1}")
+              ("(let [:a 1 :b-!- 2])" "(let [:b-!- 2 :a 1])")
+              ("(art [:a 1 :b-!- 2])" "([:a 1 :b-!- 2] art)")))
 
 ;;; Context Tests
 

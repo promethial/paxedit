@@ -41,8 +41,10 @@
 
 ;;; Unnecessary comment
 
+(message "unnecessary message")
+
 (paxedit-put (paxedit-new)
-             :movie "Apollo 13"
+             :movie "Apollo 13"         ; Another unnecessary comment
              :cost 100000000
              "Tom Hanks" :lead-actor)
 

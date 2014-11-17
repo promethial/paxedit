@@ -6,7 +6,7 @@
 ;; Maintainer: Mustafa Shameem
 ;; URL: https://github.com/promethial/paxedit
 ;; Created: November 2, 2014
-;; Version: 1.1.0
+;; Version: 1.1.1
 ;; Keywords: lisp, refactoring, context
 ;; Package-Requires: ((cl-lib "0.5") (paredit "23"))
 
@@ -74,7 +74,8 @@
   :group 'paxedit
   :type '(alist :key-type symbol :value-type (list integer integer)))
 
-(defcustom paxedit-implicit-structures-clojure '((?\{ . (0 2)))
+(defcustom paxedit-implicit-structures-clojure '((?\{ . (0 2))
+                                                 (?\[ . (0 2 let)))
   "Implicit structures in Clojure."
   :group 'paxedit
   :type '(alist :key-type character :value-type (list integer integer)))
@@ -595,7 +596,7 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
 (defun paxedit-implicit-sexp-properties (context)
   "Add implicit SEXP properties."
   (when (paxedit-cxt-sexp? context)
-    (let ((istructure (assq (paxedit-get context :sexp-type) paxedit-sexp-implicit-structures))
+    (let ((istructure (paxedit--cxt-implicit-structure context))
           (ifunction (assq (paxedit-get context :function-symbol) paxedit-sexp-implicit-functions)))
       (cond
        (istructure (paxedit-put context
@@ -615,6 +616,15 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
     (when (paxedit-contains? context :implicit-dimension)
       (paxedit-cxt-implicit-gen context)))
   context)
+
+(defun paxedit--cxt-implicit-structure (context)
+  "Return the dimensions of the implicit structure if it exists, else return nil."
+  (paxedit-awhen (assq (paxedit-get context :sexp-type)
+                       paxedit-sexp-implicit-structures)
+    (let ((parent-check (cl-third (cl-rest it))))
+      (cond
+       ((not parent-check) it)
+       ((equal (paxedit-sexp-parent-function-symbol) parent-check) it)))))
 
 (defun paxedit-cxt-implicit-gen (context)
   "Generate the implicit sexp's shape."
