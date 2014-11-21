@@ -212,12 +212,6 @@ e.g. FORM (message) is the same as FORM message"
     `(defun ,function-name ,arguments
        ,@body)))
 
-(defmacro paxedit-nif (test-form greater zero less)
-  `(cl-case (signum ,test-form)
-     (1 ,greater)
-     (0 ,zero)
-     (-1 ,less)))
-
 (defmacro paxedit-aif (test-form then-form &optional else-form)
   "Anaphoric if expression."
   (declare (indent 2))
