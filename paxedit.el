@@ -710,6 +710,14 @@ e.g. some-function-name, 123, 12_234."
     (when exit
       (cons (point) eol))))
 
+(defun paxedit-comment-internal-region (comment-region)
+  "Return the content region of the comment. Essentially everything past the last ';'."
+  (save-excursion
+    (paxedit-awhen (cl-first comment-region)
+      (goto-char it)
+      (skip-chars-forward ";" (line-end-position))
+      (cons (point) (cl-rest comment-region)))))
+
 (defun paxedit-comment-move (forwardp)
   "Move to the next comment if FORWARDP is true else move to previous comment. If no comment is found return nil."
   (if forwardp
@@ -1075,15 +1083,29 @@ e.g. some-function-name, 123, 12_234."
       (paxedit-swap-regions current-region it)
     (error error-message)))
 
+(defun paxedit-comment-swap-symbols (fowardp comment-region)
+  (let* ((current-symbol (paxedit-symbol-cursor-within?))
+         (comment-core (paxedit-comment-internal-region comment-region))
+         (next-symbol (save-excursion (paxedit-move-to-symbol fowardp)
+                                      (paxedit-symbol-current-boundary))))
+    (if (and next-symbol
+             (not (equal next-symbol current-symbol))
+             (paxedit-region-contains comment-core next-symbol))
+        (paxedit-swap-regions next-symbol
+                              current-symbol))))
+
 (defun paxedit-context-comment (context)
   "Swap with next or previous comment."
   (paxedit-aif (and context
                     (not (paxedit-cxt-sexp? context))
                     (paxedit-comment-check-context))
-      (paxedit-swap-if-next it
-                            'paxedit-comment-next-region
-                            (equal (paxedit-get context :direction) :forward)
-                            "No comment found to switch with.")
+      (if (paxedit-symbol-cursor-within?)
+          (paxedit-comment-swap-symbols (equal (paxedit-get context :direction) :forward)
+                                        it)
+        (paxedit-swap-if-next it
+                              'paxedit-comment-next-region
+                              (equal (paxedit-get context :direction) :forward)
+                              "No comment found to switch with."))
     context))
 
 (defun paxedit-context-implicit-sexp (context)

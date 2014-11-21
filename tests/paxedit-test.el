@@ -148,13 +148,22 @@ when t '-!-(+ 1 2))" "(
 -!-3 4 ;; some math
 )" '(12 . 24))))
 
+(xt-deftest paxedit-comment-internal-region
+  (xtd-return= (lambda (_) (paxedit-comment-internal-region (paxedit-comment-check-context)))
+               ("; Hello" '(2 . 8))
+               ("; H" '(2 . 4))
+               (";;" '(3 . 3))
+               (";; yellow-!-" '(3 . 10))
+               ("" nil)))
+
 (xt-deftest paxedit-next-symbol
   (xtd-setup= (lambda (_) (call-interactively 'paxedit-next-symbol))
               ("-!-move forward" "move -!-forward")
-              ("-!-move_32342423*^&%$, forward" "move_32342423*^&%$, -!-forward"))
+              ("-!-move_32342423*^&%$, forward" "move_32342423*^&%$, -!-forward")
+              ("[-!-] art" "[] -!-art"))
   (xtd-setup= (lambda (_) (call-interactively 'paxedit-previous-symbol))
               ("move -!-forward" "move-!- forward")
-              ("move_32342423*^&%$,-!- forward" "-!-move_32342423*^&%$, forward")))
+              ("move_32342423*^&%$-!- forward" "-!-move_32342423*^&%$ forward")))
 
 (xt-deftest paxedit-kill
   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
@@ -194,8 +203,8 @@ when t '-!-(+ 1 2))" "(
                "'art
                 'project;; My Comment-!-"))
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                        (paxedit-test-elisp-setup)
-                        (call-interactively 'paxedit-kill)))
+                             (paxedit-test-elisp-setup)
+                             (call-interactively 'paxedit-kill)))
                ("-!-" "message:: Nothing found to kill in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to kill in this context.")))
 
@@ -228,8 +237,8 @@ when t '-!-(+ 1 2))" "(
                "'art-!-
                 'project"))
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                        (paxedit-test-elisp-setup)
-                        (call-interactively 'paxedit-delete)))
+                             (paxedit-test-elisp-setup)
+                             (call-interactively 'paxedit-delete)))
                ("-!-" "message:: Nothing found to delete in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to delete in this context.")))
 
@@ -316,6 +325,15 @@ when t '-!-(+ 1 2))" "(
                         (one 1) 1234
                         :two-!- 2345)" "message:: Nothing found to swap with.")))
 
+(xt-deftest paxedit-tranpose-backward
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
+                (paxedit-transpose-backward))
+              (";; world hell-!-o" ";; hell-!-o world")
+              (";; hell-!-o world" ";; hell-!-o world")
+              (";; other message
+;; hell-!-o world" ";; other message
+;; hell-!-o world")))
+
 (xt-deftest paxedit-transpose-backward-clojure
   (xtd-setup= (lambda (_) (paxedit-test-clojure-setup)
                 (paxedit-transpose-backward))
@@ -389,12 +407,12 @@ when t '-!-(+ 1 2))" "(
               ("-!-" "-!-")
               ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                             (paxedit-sexp-raise)))
+                        (paxedit-sexp-raise)))
                ("-!-" "message:: No SEXP found to raise.")))
 
 (xt-deftest paxedit-wrap-comment
   (xtd-setup= (lambda (_) (let ((paxedit-alignment-cleanup nil))
-                            (paxedit-wrap-comment)))
+                       (paxedit-wrap-comment)))
               ("(message-!- \"hello\")" "(comment (message-!- \"hello\"))")
               ("(message
 \"hello\"-!-)" "(comment (message
