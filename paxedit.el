@@ -156,7 +156,7 @@
 (defvar paxedit-language-whitespace (append paxedit-general-whitespace
                                             paxedit-general-newline
                                             '(?,))
-  "Characters considering whitespace by the language.")
+  "Characters considered whitespace by the language.")
 
 (defvar paxedit-symbol-separator (append paxedit-language-whitespace paxedit-sexp-boundary-delimiters)
   "Characters indicating symbol boundary.")
@@ -223,6 +223,15 @@ e.g. FORM (message) is the same as FORM message"
   (declare (indent 1))
   `(paxedit-aif ,test-form
        (progn ,@then-forms)))
+
+;;; Utility Function
+
+(defun paxedit-funcif (condition func-true func-false &rest args)
+  "Apply the function FUNC-TRUE to ARGS if CONDITION is true, else apply FUNC-FALSE to ARGS."
+  (apply (if condition
+             func-true
+           func-false)
+         args))
 
 ;;; General Functions
 
@@ -659,23 +668,17 @@ e.g. some-function-name, 123, 12_234."
   (paxedit-awhen (paxedit-symbol-current-boundary)
     (buffer-substring (cl-first it) (cl-rest it))))
 
-(defun paxedit-move-to-symbol (forwardp)
+(defun paxedit-move-to-symbol (forwardp &optional limit)
   "Move backward or forward a symbol."
+  (paxedit-symbol-move forwardp)
   (if forwardp
-      (progn (paxedit-goto-end-of-symbol)
-             (skip-chars-forward paxedit-symbol-separator-regex))
-    (paxedit-goto-start-of-symbol)
-    (skip-chars-backward paxedit-symbol-separator-regex)))
+      (skip-chars-forward paxedit-symbol-separator-regex limit)
+    (skip-chars-backward paxedit-symbol-separator-regex limit)))
 
-(defun paxedit-symbol-find (forwardp)
-  "Find the next or previous symbol (if it exists)."
-  (if (paxedit-symbol-current-boundary)
-      nil
-    (let ((original-position (point)))
-      (funcall (if forwardp
-                   'skip-chars-forward
-                 'skip-chars-backward)
-               paxedit-symbol-separator-regex))))
+(defun paxedit-symbol-move (forwardp)
+  "Move the cursor to the end of the current symbol if FORWARDP is true, else move to start of symbol."
+  (paxedit-awhen (paxedit-symbol-current-boundary)
+    (goto-char (paxedit-funcif forwardp 'cl-rest 'cl-first it))))
 
 (defun paxedit-symbol-cursor-within? ()
   "Return true if the cursors is within the symbol, and not at the left or right boundary of the symbol."
@@ -763,10 +766,10 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-whitespace-clean (&optional clean-to-right?)
   "Clean whitespace to the right or left."
   (let ((empty-region-end (point)))
-    (funcall (if clean-to-right?
-                 'skip-chars-forward
-               'skip-chars-backward)
-             (concat paxedit-general-whitespace paxedit-general-newline))
+    (paxedit-funcif clean-to-right?
+                    'skip-chars-forward
+                    'skip-chars-backward
+                    (concat paxedit-general-whitespace paxedit-general-newline))
     (paxedit-region-delete (cons (point) empty-region-end))))
 
 (defun paxedit-sexp-removal-cleanup ()
@@ -880,7 +883,6 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-next-symbol (&optional n)
   "Go to the next symbol."
   (interactive "p")
-  (paxedit-symbol-find t)
   (dotimes (_ n)
     (paxedit-move-to-symbol t)))
 
@@ -888,7 +890,6 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-previous-symbol (&optional n)
   "Go to the previous symbol."
   (interactive "p")
-  (paxedit-symbol-find nil)
   (dotimes (_ n)
     (paxedit-move-to-symbol nil)))
 
