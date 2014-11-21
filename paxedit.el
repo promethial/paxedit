@@ -1083,11 +1083,10 @@ e.g. some-function-name, 123, 12_234."
       (paxedit-swap-regions current-region it)
     (error error-message)))
 
-(defun paxedit-comment-swap-symbols (fowardp comment-region)
-  (let* ((current-symbol (paxedit-symbol-cursor-within?))
-         (comment-core (paxedit-comment-internal-region comment-region))
-         (next-symbol (save-excursion (paxedit-move-to-symbol fowardp)
-                                      (paxedit-symbol-current-boundary))))
+(defun paxedit-comment-swap-symbols (current-symbol fowardp comment-region)
+  (let ((comment-core (paxedit-comment-internal-region comment-region))
+        (next-symbol (save-excursion (paxedit-move-to-symbol fowardp)
+                                     (paxedit-symbol-current-boundary))))
     (if (and next-symbol
              (not (equal next-symbol current-symbol))
              (paxedit-region-contains comment-core next-symbol))
@@ -1099,13 +1098,15 @@ e.g. some-function-name, 123, 12_234."
   (paxedit-aif (and context
                     (not (paxedit-cxt-sexp? context))
                     (paxedit-comment-check-context))
-      (if (paxedit-symbol-cursor-within?)
-          (paxedit-comment-swap-symbols (equal (paxedit-get context :direction) :forward)
-                                        it)
-        (paxedit-swap-if-next it
-                              'paxedit-comment-next-region
-                              (equal (paxedit-get context :direction) :forward)
-                              "No comment found to switch with."))
+      (let ((symbol-current (paxedit-symbol-cursor-within?)))
+        (if symbol-current
+            (paxedit-comment-swap-symbols symbol-current
+                                          (equal (paxedit-get context :direction) :forward)
+                                          it)
+          (paxedit-swap-if-next it
+                                'paxedit-comment-next-region
+                                (equal (paxedit-get context :direction) :forward)
+                                "No comment found to switch with.")))
     context))
 
 (defun paxedit-context-implicit-sexp (context)
