@@ -1,14 +1,35 @@
+;; Copyright 2014 Mustafa Shameem
+
+;; Author: Mustafa Shameem
+;; Maintainer: Mustafa Shameem
+;; URL: https://github.com/promethial/paxedit
+
+;;; This file is part of Paxedit.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 (require 'cl-lib)
 (require 'xtest)
 (require 'paxedit)
 
-(defun paxedit-test-setup ()
-  "Test setup for Paxedit."
+(defun paxedit-test-elisp-setup ()
+  "Elisp test setup for Paxedit."
   (emacs-lisp-mode)
   (paxedit-mode 1))
 
 (defun paxedit-test-clojure-setup ()
-  "Test setup for Paxedit."
+  "Clojure test setup for Paxedit."
   (clojure-mode)
   (paxedit-mode 1))
 
@@ -59,7 +80,7 @@
               ("we hold these-!- truths" "we hold -!-These Truths")))
 
 (xt-deftest paxedit-sexp-move-to-start
-  (xtd-setup= (lambda (x) (paxedit-sexp-move-to-core-start))
+  (xtd-setup= (lambda (_) (paxedit-sexp-move-to-core-start))
               ("(message -!-\"hello\")" "-!-(message \"hello\")")
               ("'(message -!-\"hello\")" "'-!-(message \"hello\")")
               ("[message -!-\"hello\"]" "-!-[message \"hello\"]")
@@ -67,16 +88,16 @@
               ("(if x b (message -!-\"hello\"))" "(if x b -!-(message \"hello\"))")))
 
 (xt-deftest paxedit-sexp-forward
-  (xtd-setup= (lambda (x) (paxedit-sexp-forward))
+  (xtd-setup= (lambda (_) (paxedit-sexp-forward))
               ("(if t -!-(message \"hello\"))" "(if t (message \"hello\")-!-)")
               ("(if t (message \"hello\")-!- test)" "(if t (message \"hello\") test-!-)")))
 
 (xt-deftest paxedit-sexp-core-get-start-point
-  (xtd-return= (lambda (x) (paxedit-sexp-core-get-start-point))
+  (xtd-return= (lambda (_) (paxedit-sexp-core-get-start-point))
                ("(when t '-!-(+ 1 2))" 9)))
 
 (xt-deftest paxedit-sexp-core-move-istart
-  (xtd-setup= (lambda (x) (paxedit-sexp-move-to-core-start)
+  (xtd-setup= (lambda (_) (paxedit-sexp-move-to-core-start)
                 (paxedit-sexp-core-move-istart))
               ("(when t '-!-(+ 1 2))" "(-!-when t '(+ 1 2))")
               ("(    when t '-!-(+ 1 2))" "(    -!-when t '(+ 1 2))")
@@ -85,13 +106,13 @@ when t '-!-(+ 1 2))" "(
 -!-when t '(+ 1 2))")))
 
 (xt-deftest paxedit-sexp-core-get-type
-  (xtd-return= (lambda (x) (paxedit-sexp-move-to-core-start)
+  (xtd-return= (lambda (_) (paxedit-sexp-move-to-core-start)
                  (paxedit-sexp-core-get-type))
                ("(when (< x 10) (message-!- \"Guten Tag\"))" ?\()
                ("(when (< x 10) [1 -!-2 3])" ?\[)))
 
 (xt-deftest paxedit-sexp-core-get-functional-symbol
-  (xtd-return= (lambda (x) (paxedit-sexp-core-get-functional-symbol))
+  (xtd-return= (lambda (_) (paxedit-sexp-core-get-functional-symbol))
                ("(when (< x 10) -!-(zip 100))" 'zip)
                ("(when (< x 10) -!-(    zip 100))" 'zip)
                ("(when (< x 10) -!-(
@@ -103,7 +124,7 @@ when t '-!-(+ 1 2))" "(
   (error \"oh no\"))" 'message)))
 
 (xt-deftest paxedit-comment-valid?
-  (xtd-return= (lambda (x) (paxedit-comment-valid?))
+  (xtd-return= (lambda (_) (paxedit-comment-valid?))
                ("-!-" nil)
                ("-!-(+ 1 2 3)" nil)
                ("\"-!-;\"" nil)
@@ -111,7 +132,7 @@ when t '-!-(+ 1 2))" "(
                ("-!-;1" t)))
 
 (xt-deftest paxedit-comment-check-context
-  (xtd-return= (lambda (x) (paxedit-comment-check-context))
+  (xtd-return= (lambda (_) (paxedit-comment-check-context))
                ("-!-" nil)
                ("(+ 1 2 3) -!-;; some math" '(11 . 23))
                ("-!-;; some math" '(1 . 13))
@@ -128,15 +149,15 @@ when t '-!-(+ 1 2))" "(
 )" '(12 . 24))))
 
 (xt-deftest paxedit-next-symbol
-  (xtd-setup= (lambda (x) (call-interactively 'paxedit-next-symbol))
+  (xtd-setup= (lambda (_) (call-interactively 'paxedit-next-symbol))
               ("-!-move forward" "move -!-forward")
               ("-!-move_32342423*^&%$, forward" "move_32342423*^&%$, -!-forward"))
-  (xtd-setup= (lambda (x) (call-interactively 'paxedit-previous-symbol))
+  (xtd-setup= (lambda (_) (call-interactively 'paxedit-previous-symbol))
               ("move -!-forward" "move-!- forward")
               ("move_32342423*^&%$,-!- forward" "-!-move_32342423*^&%$, forward")))
 
 (xt-deftest paxedit-kill
-  (xtd-setup= (lambda (x) (paxedit-test-setup)
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (call-interactively 'paxedit-kill)
                 (goto-char (point-max))
                 (yank))
@@ -172,14 +193,14 @@ when t '-!-(+ 1 2))" "(
                 'project"
                "'art
                 'project;; My Comment-!-"))
-  (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                             (paxedit-test-setup)
-                             (call-interactively 'paxedit-kill)))
+  (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
+                        (paxedit-test-elisp-setup)
+                        (call-interactively 'paxedit-kill)))
                ("-!-" "message:: Nothing found to kill in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to kill in this context.")))
 
 (xt-deftest paxedit-delete
-  (xtd-setup= (lambda (x) (paxedit-test-setup)
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (let ((kill-ring nil))
                   (call-interactively 'paxedit-delete)
                   (ignore-errors (yank))))
@@ -206,14 +227,14 @@ when t '-!-(+ 1 2))" "(
                 'project"
                "'art-!-
                 'project"))
-  (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                             (paxedit-test-setup)
-                             (call-interactively 'paxedit-delete)))
+  (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
+                        (paxedit-test-elisp-setup)
+                        (call-interactively 'paxedit-delete)))
                ("-!-" "message:: Nothing found to delete in this context.")
                ("-!-(+ 1 2 3)" "message:: Nothing found to delete in this context.")))
 
 (xt-deftest paxedit-transpose-forward
-  (xtd-setup= (lambda (x) (paxedit-test-setup)
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (call-interactively 'paxedit-transpose-forward))
               ;; Symbol Refactoring
               (":o-!-ne :two :three" ":two :o-!-ne :three")
@@ -284,7 +305,7 @@ when t '-!-(+ 1 2))" "(
                 (+ 9 9 9);; Greeting
                 (+ 1 2)
                 ;; -!-Hello World"))
-  (xtd-return= (lambda (x) (paxedit-test-setup)
+  (xtd-return= (lambda (_) (paxedit-test-elisp-setup)
                  (cl-letf (((symbol-function 'message) (lambda (output) (error (concat "message:: " output)))))
                    (condition-case ex
                        (call-interactively 'paxedit-transpose-forward)
@@ -305,25 +326,27 @@ when t '-!-(+ 1 2))" "(
 ;;; Context Tests
 
 (xt-deftest paxedit-cxt-sexp-enumerate
-  (xtd-return= (lambda (x) (paxedit-cxt-sexp-enumerate (paxedit-context-generate :forward 1)))
+  (xtd-return= (lambda (_) (paxedit-cxt-sexp-enumerate (paxedit-context-generate :forward 1)))
                ("(-!-1 2 3)" '((2 . 3) (4 . 5) (6 . 7)))
                ("(-!-1 2 \"3\")" '((2 . 3) (4 . 5) (6 . 9)))))
 
 (xt-deftest paxedit-cxt-sexp?
-  (xtd-return= (lambda (x) (paxedit-cxt-sexp? (paxedit-context-generate)))
+  (xtd-return= (lambda (_) (paxedit-cxt-sexp? (paxedit-context-generate)))
                ("(+ 1 -!-2)" t)
                ("{:one 1 -!-:two 2}" t)
                ("-!-(+ 1 2)" nil)
                ("" nil)))
 
 (xt-deftest paxedit-cxt-topmost-sexp?
-  (xtd-return= (lambda (x) (paxedit-cxt-topmost-sexp? (paxedit-context-generate)))
+  (xtd-return= (lambda (_) (paxedit-cxt-topmost-sexp? (paxedit-context-generate)))
                ("(+ 1 -!-2)" t)
                ("(+ 1 (1- -!-20))" nil)
                ("-!-()" nil)))
 
+;;; Interactive Functions
+
 (xt-deftest paxedit-backward-up
-  (xtd-setup= (lambda (_) (paxedit-test-setup)
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (call-interactively 'paxedit-backward-up))
               ("(when (+ 1-!- 2) t)" "(when -!-(+ 1 2) t)")
               ;; Implicit SEXP backward up tests
@@ -333,14 +356,14 @@ when t '-!-(+ 1 2))" "(
               ("(paxedit-put (paxedit-new) :one 1-!-)" "-!-(paxedit-put (paxedit-new) :one 1)")
               ;; Comment backward up
               (";; hello -!-world" "-!-;; hello world"))
-  (xtd-setup= (lambda (_) (paxedit-test-setup)
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (paxedit-backward-up 2))
               ("(when (+ 1-!- 2) t)" "-!-(when (+ 1 2) t)")
               ;; Implicit SEXP backward up
               ("(paxedit-put (paxedit-new) :one-!- 1)" "-!-(paxedit-put (paxedit-new) :one 1)")))
 
 (xt-deftest paxedit-backward-end
-  (xtd-setup= (lambda (_) (paxedit-test-setup)
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (call-interactively 'paxedit-backward-end))
               ("(when (+ 1-!- 2) t)" "(when (+ 1 2)-!- t)")
               ;; Implicit SEXP backward end
@@ -350,7 +373,7 @@ when t '-!-(+ 1 2))" "(
               ("(paxedit-put (paxedit-new) :one 1-!-)" "(paxedit-put (paxedit-new) :one 1)-!-")
               ;; Comment backward end
               (";; hello-!- world, :D" ";; hello world, :D-!-"))
-  (xtd-setup= (lambda (_) (paxedit-test-setup)
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (paxedit-backward-end 2))
               ("(when (+ 1-!- 2) t)" "(when (+ 1 2) t)-!-")
               ;; Implicit SEXP backward end tests
@@ -365,21 +388,20 @@ when t '-!-(+ 1 2))" "(
  (+ 2-!- 3)))" "(1+ (+ 2-!- 3))")
               ("-!-" "-!-")
               ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
-  (xtd-return= (lambda (x) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
+  (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
                              (paxedit-sexp-raise)))
                ("-!-" "message:: No SEXP found to raise.")))
 
 (xt-deftest paxedit-wrap-comment
-  (xtd-setup= (lambda (x) (setf paxedit-alignment-cleanup nil)
-                (paxedit-wrap-comment)
-                (setf paxedit-alignment-cleanup t))
+  (xtd-setup= (lambda (_) (let ((paxedit-alignment-cleanup nil))
+                            (paxedit-wrap-comment)))
               ("(message-!- \"hello\")" "(comment (message-!- \"hello\"))")
               ("(message
 \"hello\"-!-)" "(comment (message
 \"hello\"-!-))")))
 
 (xt-deftest paxedit-delete-whitespace
-  (xtd-setup= (lambda (x) (paxedit-delete-whitespace))
+  (xtd-setup= (lambda (_) (paxedit-delete-whitespace))
               ("(hello    -!-  world)" "(hello-!-world)")
               ("(+ 1-!-
 
@@ -387,7 +409,7 @@ when t '-!-(+ 1 2))" "(
 3)" "(+ 1-!-3)")))
 
 (xt-deftest paxedit-wrap-function
-  (xtd-setup= (lambda (x) (paxedit-wrap-function "1+" '(1 . 6)))
+  (xtd-setup= (lambda (_) (paxedit-wrap-function "1+" '(1 . 6)))
               ("(func-!-)" "(1+ (func-!-))")
               ("-!-(func)" "(1+ -!-(func))")))
 
