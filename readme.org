@@ -180,29 +180,31 @@ Available to install via Melpa.
    #+BEGIN_SRC emacs-lisp
 (setf paxedit-alignment-cleanup nil)
    #+END_SRC
-2. Adding new implicit functions.
+2. Adding new implicit functions. /If new implicit functions are added, paxedit-mode must be disabled and re-enabled for the changes to take effect./
    #+BEGIN_SRC emacs-lisp
-;;; Function with implicit strucutre of two starting
+;;; Elisp function with implicit strucutre of two starting
 ;;; at first argument.
 
 (some-function first 1
                second 2)
 
-;;; Function with implicit structure of three starting
+;;; Elisp function with implicit structure of three starting
 ;;; at the second argument.
 
 (some-function2 ignored-symbol
                 'first 1 "one"
                 'second 2 "two")
 
-(add-to-list 'paxedit-implicit-functions-elisp '((some-function . (1 2))
-                                                 (some-function2 . (2 3))))
+ (eval-after-load "paxedit"
+  '(progn (add-to-list 'paxedit-implicit-functions-elisp '(some-function . (1 2)))
+          (add-to-list 'paxedit-implicit-functions-elisp '(some-function2 . (2 3)))))
 
 ;;; Similarly if we wanted to add these functions to
 ;;; Clojure we can do:
 
-(add-to-list 'paxedit-implicit-functions-clojure '((some-function . (1 2))
-                                                   (some-function2 . (2 3))))
+(eval-after-load "paxedit"
+  '(progn (add-to-list 'paxedit-implicit-functions-clojure '(some-function . (1 2)))
+          (add-to-list 'paxedit-implicit-functions-clojure '(some-function2 . (2 3)))))
    #+END_SRC
 3. Language specific customization. One can use the logic below to add more languages.
    #+BEGIN_SRC emacs-lisp
@@ -223,18 +225,18 @@ Available to install via Melpa.
 ;;; when loaded will setup the buffer local implicit functions
 ;;; and structures.
 
-(defvar paxedit-assoc `((emacs-lisp-mode . (,paxedit-implicit-functions-elisp
+(defvar paxedit-assoc '((emacs-lisp-mode . (paxedit-implicit-functions-elisp
                                             ;; Elisp does not have any
                                             ;; implicit strucutrues
                                             nil))
-                        (clojure-mode . (,paxedit-implicit-functions-clojure
-                                         ,paxedit-implicit-structures-clojure)))
+                        (clojure-mode . (paxedit-implicit-functions-clojure
+                                         paxedit-implicit-structures-clojure)))
   "Associate major mode with implicit functions and strucuture.")
 
 ;;; Adding a new language
 
-(add-to-list paxedit-assoc `(haskell-mode . (,paxedit-implicit-functions-haskell
-                                             ,paxedit-implicit-structures-haskell)))
+(add-to-list paxedit-assoc '(haskell-mode . (paxedit-implicit-functions-haskell
+                                             paxedit-implicit-structures-haskell)))
 
 ;;; User must define paxedit-implicit-structures-haskell & paxedit-implicit-functions-haskell
 ;;; using the format for paxedit-implicit-functions-elisp
