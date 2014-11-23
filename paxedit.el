@@ -123,12 +123,12 @@
   "Internal implicit structure.")
 
 ;;; Default Major Mode Associations
-(defvar paxedit-assoc `((emacs-lisp-mode . (,paxedit-implicit-functions-elisp
+(defvar paxedit-assoc '((emacs-lisp-mode . (paxedit-implicit-functions-elisp
                                             ;; Elisp does not have any
                                             ;; implicit strucutrues
                                             nil))
-                        (clojure-mode . (,paxedit-implicit-functions-clojure
-                                         ,paxedit-implicit-structures-clojure)))
+                        (clojure-mode . (paxedit-implicit-functions-clojure
+                                         paxedit-implicit-structures-clojure)))
   "Associate major mode with implicit functions and strucuture.")
 
 ;;; Paxedit Defaults
@@ -1317,8 +1317,8 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit--associate-major-mode-to-implicit-sexp ()
   "Associate major mode with certain implicit functions and structures."
   (paxedit-awhen (cl-rest (assq major-mode paxedit-assoc))
-    (set (make-local-variable 'paxedit-sexp-implicit-functions) (cl-first it))
-    (set (make-local-variable 'paxedit-sexp-implicit-structures) (cl-second it))))
+    (set (make-local-variable 'paxedit-sexp-implicit-functions) (eval (cl-first it)))
+    (set (make-local-variable 'paxedit-sexp-implicit-structures) (eval (cl-second it)))))
 
 ;;; Setting Up Minor Mode
 

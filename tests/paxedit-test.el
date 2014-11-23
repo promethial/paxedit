@@ -75,7 +75,7 @@
 
 (xt-deftest paxedit-region-modify
   (xtd-setup= (lambda (_) (paxedit-region-modify '(9 . 21) ; This region will be capitalized
-                                            (lambda (x) (capitalize x))))
+                                                 (lambda (x) (capitalize x))))
               ("we hold these truths" "-!-we hold These Truths")
               ("we hold these-!- truths" "we hold -!-These Truths")))
 
@@ -407,12 +407,12 @@ when t '-!-(+ 1 2))" "(
               ("-!-" "-!-")
               ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                        (paxedit-sexp-raise)))
+                             (paxedit-sexp-raise)))
                ("-!-" "message:: No SEXP found to raise.")))
 
 (xt-deftest paxedit-wrap-comment
   (xtd-setup= (lambda (_) (let ((paxedit-alignment-cleanup nil))
-                       (paxedit-wrap-comment)))
+                            (paxedit-wrap-comment)))
               ("(message-!- \"hello\")" "(comment (message-!- \"hello\"))")
               ("(message
 \"hello\"-!-)" "(comment (message
@@ -442,3 +442,10 @@ when t '-!-(+ 1 2))" "(
   (xtd-setup= (lambda (_) (call-interactively 'paxedit-symbol-change-case))
               ("hell-!-o" "HELL-!-O")
               ("HELL-!-O" "hell-!-o")))
+
+(xt-deftest paxedit-custom-implicit-function
+  (xtd-setup= (lambda (_) (eval-after-load "paxedit"
+                            '(progn (add-to-list 'paxedit-implicit-functions-elisp '(pax-some-function . (1 2)))))
+                (paxedit-test-elisp-setup)
+                (paxedit-kill))
+              ("(pax-some-function :one -!-1 :two 2)" "(pax-some-function -!- :two 2)")))
