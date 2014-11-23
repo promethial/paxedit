@@ -631,14 +631,14 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
 
 (defun paxedit-cxt-implicit-gen (context)
   "Generate the implicit sexp's shape."
-  (let ((subseq-part-code (paxedit-partition (paxedit-get context :implicit-size)
-                                             (cl-subseq (paxedit-get context :sexp-enum)
-                                                        (paxedit-get context :implicit-offset)))))
+  (let* ((sexp-size (paxedit-get context :implicit-size))
+         (subseq-part-code (paxedit-partition sexp-size
+                                              (cl-subseq (paxedit-get context :sexp-enum)
+                                                         (paxedit-get context :implicit-offset)))))
     (paxedit-put context
-                 :implicit-shape (mapcar (lambda (x) (cons (caar x) (cl-rest (cl-first (cl-rest x)))))
-                                         subseq-part-code)
-                 :implicit-delete (mapcar (lambda (x) (cons (cl-rest (cl-first x)) (cl-first (cl-second x))))
-                                          subseq-part-code))))
+                 :implicit-shape (mapcar (lambda (x) (cons (caar x)
+                                                      (cl-rest (cl-nth-value (1- sexp-size) x))))
+                                         subseq-part-code))))
 
 (defun-paxedit-excursion paxedit-cxt-sexp-enumerate (context)
   "Return an alist which contains regions (START . END) of every form contained within the parent SEXP."
