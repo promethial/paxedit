@@ -176,7 +176,7 @@
 (defvar paxedit-cursor-preserve-random "**$$**$$"
   "Unique string to allow preservation of cursor position")
 
-;;; MS Library
+;;; Paxedit Library
 
 ;;; Macros
 
@@ -212,6 +212,8 @@ e.g. FORM (message) is the same as FORM message"
     `(defun ,function-name ,arguments
        ,@body)))
 
+;;; Anaphoric Macros
+
 (defmacro paxedit-aif (test-form then-form &optional else-form)
   "Anaphoric if expression."
   (declare (indent 2))
@@ -223,6 +225,12 @@ e.g. FORM (message) is the same as FORM message"
   (declare (indent 1))
   `(paxedit-aif ,test-form
        (progn ,@then-forms)))
+
+(defmacro paxedit-aand (&rest args)
+  (cond ((null args) t)
+        ((null (cdr args)) (car args))
+        (t `(paxedit-awhen ,(car args)
+              (paxedit-aand ,@(cdr args))))))
 
 ;;; Utility Function
 
