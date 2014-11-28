@@ -381,8 +381,9 @@ e.g. FORM (message) is the same as FORM message"
        (< point rend)))
 
 (defun-paxedit-region paxedit-region-contains-current-point ()
-  "Verify cursor's (or current point's) location is bounded by REGION. Cursor ∈ [START, END]."
-  (paxedit-region-contains-point region (point)))
+  "If cursor's location is bounded by REGION return REGION else nil. Cursor ∈ [START, END]."
+  (when (paxedit-region-contains-point region (point))
+    region))
 
 (defun paxedit-region-contains (region1 region2)
   "Verify REGION2 is bounded by REGION1."
@@ -1169,20 +1170,23 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-implicit-sexp-up (&optional start)
   "Move to the start of the implicit SEXP if START is true, else go to the end of the implicit SEXP."
-  (paxedit-awhen (paxedit-context-generate)
-    (paxedit-awhen (and (paxedit-cxt-implicit-sexp? it)
-                        (paxedit-cxt-implicit-get-current-sexp it))
-      (when (paxedit-region-contains-point-exclude-boundary it (point))
-        (goto-char (if start
-                       (cl-first it)
-                     (cl-rest it)))))))
+  (paxedit-aand (paxedit-context-generate)
+                (and (paxedit-cxt-implicit-sexp? it)
+                     (paxedit-cxt-implicit-get-current-sexp it))
+                (paxedit-region-contains-point-exclude-boundary it (point))
+                (goto-char (paxedit-funcif start
+                                           'cl-first
+                                           'cl-rest
+                                           it))))
 
 (defun paxedit-comment-backward (direction)
   "Move to the start or end of the comment."
-  (paxedit-awhen (paxedit-comment-check-context)
-    (goto-char (funcall (if (eq direction :start)
-                            'cl-first
-                          'cl-rest) it))))
+  (paxedit-aand (paxedit-comment-check-context)
+                (paxedit-region-contains-current-point it)
+                (goto-char (paxedit-funcif (eq direction :start)
+                                           'cl-first
+                                           'cl-rest
+                                           it))))
 
 (defun paxedit-implicit-backward-up (&optional n)
   "Move to the start of the implicit SEXP."
