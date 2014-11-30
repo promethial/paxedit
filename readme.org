@@ -402,6 +402,26 @@ Available to install via Melpa.
 (when t
   mess-!-age)
 #+END_SRC
+   8. ~paxedit-insert-semicolon~ - Insert comment or semicolon depending on the context. If the cursor is in a string or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute paredit-comment-dwin to insert comment.
+      #+BEGIN_SRC emacs-lisp
+        ;;; Typing semicolon into a lisp buffer
+
+        -!-
+
+        ;;; ⟹
+
+        ;;; -!-
+
+        ;;; Results in inserting of comment
+
+        (message "hello -!-")
+
+        ;;; ⟹
+
+        (message "hello ;")
+
+        ;;; Results in insertion of semicolon
+      #+END_SRC
    9. ~paxedit-wrap-comment~ - Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed.
       #+BEGIN_SRC emacs-lisp
 ;;; Comment or uncomment the expression.

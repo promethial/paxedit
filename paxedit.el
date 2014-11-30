@@ -116,19 +116,29 @@
   :group 'paxedit
   :type 'string)
 
+;;; Internal Options
+
 (defvar paxedit-sexp-implicit-functions nil
   "Internal implict functions.")
 
+(make-variable-buffer-local 'paxedit-sexp-implicit-functions)
+
 (defvar paxedit-sexp-implicit-structures nil
   "Internal implicit structure.")
+
+(make-variable-buffer-local 'paxedit-sexp-implicit-structures)
 
 ;;; Default Major Mode Associations
 (defvar paxedit-assoc '((emacs-lisp-mode . (paxedit-implicit-functions-elisp
                                             ;; Elisp does not have any
                                             ;; implicit strucutrues
-                                            nil))
+                                            nil
+                                            ;; Mode specific function implementation
+                                            ((paxedit-insert-semicolon . paxedit-insert-semicolon-elisp))))
                         (clojure-mode . (paxedit-implicit-functions-clojure
-                                         paxedit-implicit-structures-clojure)))
+                                         paxedit-implicit-structures-clojure
+                                         ;; Mode specific function implementation
+                                         ((paxedit-insert-semicolon . paxedit-insert-semicolon-clojure)))))
   "Associate major mode with implicit functions and strucuture.")
 
 ;;; Paxedit Defaults
@@ -231,6 +241,20 @@ e.g. FORM (message) is the same as FORM message"
         ((null (cdr args)) (car args))
         (t `(paxedit-awhen ,(car args)
               (paxedit-aand ,@(cdr args))))))
+
+;;; Autoloaded, Buffer-Local, Interactive Functions
+
+;;; NOTE: might be able to make this macro more generic
+;;; e.g. handling a variety of interactive functions "p" and so on
+
+(defmacro paxedit-buffer-local-interactive-function (function-name default-function docstring)
+  "Creates an interactive, no argument, autloaded function, FUNCTION-NAME, that calls non-interactive function DEFAULT-FUNCTION."
+  `(progn (defvar ,function-name ',default-function)
+          (make-variable-buffer-local ',function-name)
+          (defun ,function-name ()
+            ,docstring
+            (interactive)
+            (funcall ,function-name))))
 
 ;;; Utility Function
 
@@ -378,7 +402,8 @@ e.g. FORM (message) is the same as FORM message"
 (defun-paxedit-region paxedit-region-contains-point-exclude-boundary (point)
   "Verify POINT is bounded by REGION. POINT ∈ (START, END)."
   (and (> point rstart)
-       (< point rend)))
+       (< point rend)
+       region))
 
 (defun-paxedit-region paxedit-region-contains-current-point ()
   "If cursor's location is bounded by REGION return REGION else nil. Cursor ∈ [START, END]."
@@ -646,7 +671,7 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
                                                          (paxedit-get context :implicit-offset)))))
     (paxedit-put context
                  :implicit-shape (mapcar (lambda (x) (cons (caar x)
-                                                      (cl-rest (cl-nth-value (1- sexp-size) x))))
+                                                           (cl-rest (cl-nth-value (1- sexp-size) x))))
                                          subseq-part-code))))
 
 (defun-paxedit-excursion paxedit-cxt-sexp-enumerate (context)
@@ -732,6 +757,11 @@ e.g. some-function-name, 123, 12_234."
   (if forwardp
       (comment-search-forward nil t)
     (comment-search-backward nil t)))
+
+(defun paxedit-comment-region-cursor ()
+  "Return the comment's region alist only if the comment exists and the cursor is contained in the comment region."
+  (paxedit-awhen (paxedit-comment-check-context)
+    (paxedit-region-contains-current-point it)))
 
 ;;; Context Functions
 
@@ -913,12 +943,11 @@ e.g. some-function-name, 123, 12_234."
 ;;; Comment
 
 (defun paxedit-comment-kill ()
-  "Kill the comment if the cursor is on."
-  (paxedit-awhen (paxedit-comment-check-context)
-    (when (paxedit-region-contains-point it (point))
-      (paxedit-region-kill it)
-      (paxedit-whitespace-clean)
-      t)))
+  "Kill the comment if it exists and the cursor is in the comment."
+  (paxedit-awhen (paxedit-comment-region-cursor)
+    (paxedit-region-kill it)
+    (paxedit-whitespace-clean)
+    t))
 
 ;;;###autoload
 (defun paxedit-comment-align-all ()
@@ -1225,6 +1254,32 @@ e.g. some-function-name, 123, 12_234."
     (goto-char (cl-rest it))
     (paredit-newline)))
 
+;;; Create buffer local function
+
+(paxedit-buffer-local-interactive-function paxedit-insert-semicolon
+                                           paxedit-insert-semicolon-elisp
+                                           "Insert comment or semicolon depending on the context. If the cursor is in a string or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute paredit-comment-dwin to insert comment.")
+
+(defun paxedit-insert-semicolon-elisp ()
+  "Elisp implementation of paxedit-insert-semicolon."
+  (paxedit-awhen (paxedit-context-generate)
+    (if (or (paxedit-comment-region-cursor)
+            ;; For elisp characters
+            (equal ?\" (paxedit-get it :sexp-type))
+            (equal ?? (char-before)))
+        (insert ";")
+      (paredit-comment-dwim))))
+
+(defun paxedit-insert-semicolon-clojure ()
+  "Clojure implementation of paxedit-insert-semicolon."
+  (paxedit-awhen (paxedit-context-generate)
+    (if (or (paxedit-comment-region-cursor)
+            (equal ?\" (paxedit-get it :sexp-type))
+            (equal ?' (char-before))
+            (equal ?' (char-after)))
+        (insert ";")
+      (paredit-comment-dwim))))
+
 ;;; Context Orchestration
 
 (defun paxedit-context-refactor-sexp (direction n)
@@ -1329,8 +1384,11 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit--associate-major-mode-to-implicit-sexp ()
   "Associate major mode with certain implicit functions and structures."
   (paxedit-awhen (cl-rest (assq major-mode paxedit-assoc))
-    (set (make-local-variable 'paxedit-sexp-implicit-functions) (eval (cl-first it)))
-    (set (make-local-variable 'paxedit-sexp-implicit-structures) (eval (cl-second it)))))
+    (setf paxedit-sexp-implicit-functions (eval (cl-first it))
+          paxedit-sexp-implicit-structures (eval (cl-second it)))
+    (mapc (lambda (function-association) (set (cl-first function-association)
+                                         (cl-rest function-association)))
+          (cl-third it))))
 
 ;;; Setting Up Minor Mode
 
