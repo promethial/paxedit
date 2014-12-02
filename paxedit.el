@@ -242,7 +242,7 @@ e.g. FORM (message) is the same as FORM message"
         (t `(paxedit-awhen ,(car args)
               (paxedit-aand ,@(cdr args))))))
 
-;;; Autoloaded, Buffer-Local, Interactive Functions
+;;; Buffer-Local, Interactive Functions
 
 ;;; NOTE: might be able to make this macro more generic
 ;;; e.g. handling a variety of interactive functions "p" and so on
@@ -671,7 +671,7 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
                                                          (paxedit-get context :implicit-offset)))))
     (paxedit-put context
                  :implicit-shape (mapcar (lambda (x) (cons (caar x)
-                                                      (cl-rest (cl-nth-value (1- sexp-size) x))))
+                                                           (cl-rest (cl-nth-value (1- sexp-size) x))))
                                          subseq-part-code))))
 
 (defun-paxedit-excursion paxedit-cxt-sexp-enumerate (context)
@@ -1036,17 +1036,22 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-sexp-raise ()
   "Raises the expression the cursor is in while perserving the cursor location."
   (interactive)
-  (if (paxedit-symbol-cursor-within?)
-      (progn (paxedit-cursor (paxedit-symbol-current-boundary)
-                             (goto-char (cl-first (paxedit-symbol-current-boundary)))
-                             (paredit-raise-sexp))
-             (paxedit-reindent-defun))
-    (paxedit-aif (paxedit-sexp-core-region)
-        (progn (paxedit-cursor it
-                               (goto-char (cl-first region))
+  (let* ((expression-above? (save-excursion (paxedit-sexp-move-to-core-start)))
+         (expression-above-2? (save-excursion (goto-char expression-above?)
+                                              (paxedit-sexp-move-to-core-start))))
+    (if (and expression-above?
+             (paxedit-symbol-cursor-within?))
+        (progn (paxedit-cursor (paxedit-symbol-current-boundary)
+                               (goto-char (cl-first (paxedit-symbol-current-boundary)))
                                (paredit-raise-sexp))
                (paxedit-reindent-defun))
-      (message "No SEXP found to raise."))))
+      (paxedit-aif (and expression-above-2?
+                        (paxedit-sexp-core-region))
+          (progn (paxedit-cursor it
+                                 (goto-char (cl-first region))
+                                 (paredit-raise-sexp))
+                 (paxedit-reindent-defun))
+        (message "No expression found to raise.")))))
 
 (defun paxedit-wrap-function (function-name region)
   "Wrap FUNCTION-NAME around some REGION."
@@ -1258,7 +1263,7 @@ e.g. some-function-name, 123, 12_234."
 
 (paxedit-buffer-local-interactive-function paxedit-insert-semicolon
                                            paxedit-insert-semicolon-elisp
-                                           "Insert comment or semicolon depending on the context. If the cursor is in a string or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute paredit-comment-dwin to insert comment.")
+                                           "Insert comment or semicolon depending on the location (or context) of the cursor. If the cursor is in a string, comment, or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute paredit-comment-dwim to insert comment.")
 
 (defun paxedit-insert-semicolon-elisp ()
   "Elisp implementation of paxedit-insert-semicolon."
