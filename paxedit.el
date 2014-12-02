@@ -6,7 +6,7 @@
 ;; Maintainer: Mustafa Shameem
 ;; URL: https://github.com/promethial/paxedit
 ;; Created: November 2, 2014
-;; Version: 1.1.3
+;; Version: 1.1.4
 ;; Keywords: lisp, refactoring, context
 ;; Package-Requires: ((cl-lib "0.5") (paredit "23"))
 
@@ -671,7 +671,7 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
                                                          (paxedit-get context :implicit-offset)))))
     (paxedit-put context
                  :implicit-shape (mapcar (lambda (x) (cons (caar x)
-                                                           (cl-rest (cl-nth-value (1- sexp-size) x))))
+                                                      (cl-rest (cl-nth-value (1- sexp-size) x))))
                                          subseq-part-code))))
 
 (defun-paxedit-excursion paxedit-cxt-sexp-enumerate (context)
