@@ -34,8 +34,7 @@ Paxedit takes a departure from the above manual state of code editing through au
 
 * Demo
 1. [[https://www.youtube.com/watch?v=vI1l-oC7HvI][Watch a demo of Paxedit on Youtube.]]
-2. Practice using Paxedit in ~practice.el~.
-
+2. Practice using Paxedit in ~practice.el~ and ~practice.clj~.
 * Introduction
 ** What is Paxedit?
 Paxedit allows the quick refactoring of symbolic expressions from deleting, swapping with neighbor symbolic expressions, and enclosing specified expressions in a comment expression.
@@ -402,6 +401,26 @@ Available to install via Melpa.
 (when t
   mess-!-age)
 #+END_SRC
+   8. ~paxedit-insert-semicolon~ - Insert comment or semicolon depending on the location (or context) of the cursor. If the cursor is in a string, comment, or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute ~paredit-comment-dwim~ to insert comment.
+      #+BEGIN_SRC emacs-lisp
+;;; Typing semicolon into a lisp buffer
+
+-!-
+
+;;; ⟹
+
+;;; -!-
+
+;;; Results in inserting of comment
+
+(message "hello -!-")
+
+;;; ⟹
+
+(message "hello ;")
+
+;;; Results in insertion of semicolon
+      #+END_SRC
    9. ~paxedit-wrap-comment~ - Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed.
       #+BEGIN_SRC emacs-lisp
 ;;; Comment or uncomment the expression.
@@ -466,6 +485,8 @@ HELL-!-O ⟹ hell-!-o
 2. Brett Victor's, Inventing on Principle Talk
 3. Editing Lisp Code - http://c2.com/cgi/wiki?EditingLispCode
 * License
+Copyright © 2014 Mustafa Shameem
+
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.

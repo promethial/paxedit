@@ -6,7 +6,7 @@
 ;; Maintainer: Mustafa Shameem
 ;; URL: https://github.com/promethial/paxedit
 ;; Created: November 2, 2014
-;; Version: 1.1.3
+;; Version: 1.1.4
 ;; Keywords: lisp, refactoring, context
 ;; Package-Requires: ((cl-lib "0.5") (paredit "23"))
 
@@ -116,19 +116,29 @@
   :group 'paxedit
   :type 'string)
 
+;;; Internal Options
+
 (defvar paxedit-sexp-implicit-functions nil
   "Internal implict functions.")
 
+(make-variable-buffer-local 'paxedit-sexp-implicit-functions)
+
 (defvar paxedit-sexp-implicit-structures nil
   "Internal implicit structure.")
+
+(make-variable-buffer-local 'paxedit-sexp-implicit-structures)
 
 ;;; Default Major Mode Associations
 (defvar paxedit-assoc '((emacs-lisp-mode . (paxedit-implicit-functions-elisp
                                             ;; Elisp does not have any
                                             ;; implicit strucutrues
-                                            nil))
+                                            nil
+                                            ;; Mode specific function implementation
+                                            ((paxedit-insert-semicolon . paxedit-insert-semicolon-elisp))))
                         (clojure-mode . (paxedit-implicit-functions-clojure
-                                         paxedit-implicit-structures-clojure)))
+                                         paxedit-implicit-structures-clojure
+                                         ;; Mode specific function implementation
+                                         ((paxedit-insert-semicolon . paxedit-insert-semicolon-clojure)))))
   "Associate major mode with implicit functions and strucuture.")
 
 ;;; Paxedit Defaults
@@ -176,7 +186,7 @@
 (defvar paxedit-cursor-preserve-random "**$$**$$"
   "Unique string to allow preservation of cursor position")
 
-;;; MS Library
+;;; Paxedit Library
 
 ;;; Macros
 
@@ -212,6 +222,8 @@ e.g. FORM (message) is the same as FORM message"
     `(defun ,function-name ,arguments
        ,@body)))
 
+;;; Anaphoric Macros
+
 (defmacro paxedit-aif (test-form then-form &optional else-form)
   "Anaphoric if expression."
   (declare (indent 2))
@@ -223,6 +235,26 @@ e.g. FORM (message) is the same as FORM message"
   (declare (indent 1))
   `(paxedit-aif ,test-form
        (progn ,@then-forms)))
+
+(defmacro paxedit-aand (&rest args)
+  (cond ((null args) t)
+        ((null (cdr args)) (car args))
+        (t `(paxedit-awhen ,(car args)
+              (paxedit-aand ,@(cdr args))))))
+
+;;; Buffer-Local, Interactive Functions
+
+;;; NOTE: might be able to make this macro more generic
+;;; e.g. handling a variety of interactive functions "p" and so on
+
+(defmacro paxedit-buffer-local-interactive-function (function-name default-function docstring)
+  "Creates an interactive, no argument, autloaded function, FUNCTION-NAME, that calls non-interactive function DEFAULT-FUNCTION."
+  `(progn (defvar ,function-name ',default-function)
+          (make-variable-buffer-local ',function-name)
+          (defun ,function-name ()
+            ,docstring
+            (interactive)
+            (funcall ,function-name))))
 
 ;;; Utility Function
 
@@ -370,11 +402,13 @@ e.g. FORM (message) is the same as FORM message"
 (defun-paxedit-region paxedit-region-contains-point-exclude-boundary (point)
   "Verify POINT is bounded by REGION. POINT ∈ (START, END)."
   (and (> point rstart)
-       (< point rend)))
+       (< point rend)
+       region))
 
 (defun-paxedit-region paxedit-region-contains-current-point ()
-  "Verify cursor's (or current point's) location is bounded by REGION. Cursor ∈ [START, END]."
-  (paxedit-region-contains-point region (point)))
+  "If cursor's location is bounded by REGION return REGION else nil. Cursor ∈ [START, END]."
+  (when (paxedit-region-contains-point region (point))
+    region))
 
 (defun paxedit-region-contains (region1 region2)
   "Verify REGION2 is bounded by REGION1."
@@ -637,7 +671,7 @@ The following properties of the SEXP are stored (if no SEXP is found, no values 
                                                          (paxedit-get context :implicit-offset)))))
     (paxedit-put context
                  :implicit-shape (mapcar (lambda (x) (cons (caar x)
-                                                      (cl-rest (cl-nth-value (1- sexp-size) x))))
+                                                           (cl-rest (cl-nth-value (1- sexp-size) x))))
                                          subseq-part-code))))
 
 (defun-paxedit-excursion paxedit-cxt-sexp-enumerate (context)
@@ -723,6 +757,11 @@ e.g. some-function-name, 123, 12_234."
   (if forwardp
       (comment-search-forward nil t)
     (comment-search-backward nil t)))
+
+(defun paxedit-comment-region-cursor ()
+  "Return the comment's region alist only if the comment exists and the cursor is contained in the comment region."
+  (paxedit-awhen (paxedit-comment-check-context)
+    (paxedit-region-contains-current-point it)))
 
 ;;; Context Functions
 
@@ -904,12 +943,11 @@ e.g. some-function-name, 123, 12_234."
 ;;; Comment
 
 (defun paxedit-comment-kill ()
-  "Kill the comment if the cursor is on."
-  (paxedit-awhen (paxedit-comment-check-context)
-    (when (paxedit-region-contains-point it (point))
-      (paxedit-region-kill it)
-      (paxedit-whitespace-clean)
-      t)))
+  "Kill the comment if it exists and the cursor is in the comment."
+  (paxedit-awhen (paxedit-comment-region-cursor)
+    (paxedit-region-kill it)
+    (paxedit-whitespace-clean)
+    t))
 
 ;;;###autoload
 (defun paxedit-comment-align-all ()
@@ -998,17 +1036,23 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit-sexp-raise ()
   "Raises the expression the cursor is in while perserving the cursor location."
   (interactive)
-  (if (paxedit-symbol-cursor-within?)
-      (progn (paxedit-cursor (paxedit-symbol-current-boundary)
-                             (goto-char (cl-first (paxedit-symbol-current-boundary)))
-                             (paredit-raise-sexp))
-             (paxedit-reindent-defun))
-    (paxedit-aif (paxedit-sexp-core-region)
-        (progn (paxedit-cursor it
-                               (goto-char (cl-first region))
+  (let* ((expression-above? (save-excursion (paxedit-sexp-move-to-core-start)))
+         (expression-above-2? (when expression-above?
+                                (save-excursion (goto-char expression-above?)
+                                                (paxedit-sexp-move-to-core-start)))))
+    (if (and expression-above?
+             (paxedit-symbol-cursor-within?))
+        (progn (paxedit-cursor (paxedit-symbol-current-boundary)
+                               (goto-char (cl-first (paxedit-symbol-current-boundary)))
                                (paredit-raise-sexp))
                (paxedit-reindent-defun))
-      (message "No SEXP found to raise."))))
+      (paxedit-aif (and expression-above-2?
+                        (paxedit-sexp-core-region))
+          (progn (paxedit-cursor it
+                                 (goto-char (cl-first region))
+                                 (paredit-raise-sexp))
+                 (paxedit-reindent-defun))
+        (message "No expression found to raise.")))))
 
 (defun paxedit-wrap-function (function-name region)
   "Wrap FUNCTION-NAME around some REGION."
@@ -1161,20 +1205,23 @@ e.g. some-function-name, 123, 12_234."
 
 (defun paxedit-implicit-sexp-up (&optional start)
   "Move to the start of the implicit SEXP if START is true, else go to the end of the implicit SEXP."
-  (paxedit-awhen (paxedit-context-generate)
-    (paxedit-awhen (and (paxedit-cxt-implicit-sexp? it)
-                        (paxedit-cxt-implicit-get-current-sexp it))
-      (when (paxedit-region-contains-point-exclude-boundary it (point))
-        (goto-char (if start
-                       (cl-first it)
-                     (cl-rest it)))))))
+  (paxedit-aand (paxedit-context-generate)
+                (and (paxedit-cxt-implicit-sexp? it)
+                     (paxedit-cxt-implicit-get-current-sexp it))
+                (paxedit-region-contains-point-exclude-boundary it (point))
+                (goto-char (paxedit-funcif start
+                                           'cl-first
+                                           'cl-rest
+                                           it))))
 
 (defun paxedit-comment-backward (direction)
   "Move to the start or end of the comment."
-  (paxedit-awhen (paxedit-comment-check-context)
-    (goto-char (funcall (if (eq direction :start)
-                            'cl-first
-                          'cl-rest) it))))
+  (paxedit-aand (paxedit-comment-check-context)
+                (paxedit-region-contains-current-point it)
+                (goto-char (paxedit-funcif (eq direction :start)
+                                           'cl-first
+                                           'cl-rest
+                                           it))))
 
 (defun paxedit-implicit-backward-up (&optional n)
   "Move to the start of the implicit SEXP."
@@ -1212,6 +1259,32 @@ e.g. some-function-name, 123, 12_234."
   (paxedit-awhen (paxedit-sexp-region)
     (goto-char (cl-rest it))
     (paredit-newline)))
+
+;;; Create buffer local function
+
+(paxedit-buffer-local-interactive-function paxedit-insert-semicolon
+                                           paxedit-insert-semicolon-elisp
+                                           "Insert comment or semicolon depending on the location (or context) of the cursor. If the cursor is in a string, comment, or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute paredit-comment-dwim to insert comment.")
+
+(defun paxedit-insert-semicolon-elisp ()
+  "Elisp implementation of paxedit-insert-semicolon."
+  (paxedit-awhen (paxedit-context-generate)
+    (if (or (paxedit-comment-region-cursor)
+            ;; For elisp characters
+            (equal ?\" (paxedit-get it :sexp-type))
+            (equal ?? (char-before)))
+        (insert ";")
+      (paredit-comment-dwim))))
+
+(defun paxedit-insert-semicolon-clojure ()
+  "Clojure implementation of paxedit-insert-semicolon."
+  (paxedit-awhen (paxedit-context-generate)
+    (if (or (paxedit-comment-region-cursor)
+            (equal ?\" (paxedit-get it :sexp-type))
+            (equal ?' (char-before))
+            (equal ?' (char-after)))
+        (insert ";")
+      (paredit-comment-dwim))))
 
 ;;; Context Orchestration
 
@@ -1317,8 +1390,11 @@ e.g. some-function-name, 123, 12_234."
 (defun paxedit--associate-major-mode-to-implicit-sexp ()
   "Associate major mode with certain implicit functions and structures."
   (paxedit-awhen (cl-rest (assq major-mode paxedit-assoc))
-    (set (make-local-variable 'paxedit-sexp-implicit-functions) (eval (cl-first it)))
-    (set (make-local-variable 'paxedit-sexp-implicit-structures) (eval (cl-second it)))))
+    (setf paxedit-sexp-implicit-functions (eval (cl-first it))
+          paxedit-sexp-implicit-structures (eval (cl-second it)))
+    (mapc (lambda (function-association) (set (cl-first function-association)
+                                         (cl-rest function-association)))
+          (cl-third it))))
 
 ;;; Setting Up Minor Mode
 

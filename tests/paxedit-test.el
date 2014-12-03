@@ -372,6 +372,9 @@ when t '-!-(+ 1 2))" "(
               ("(paxedit-put (paxedit-new) :o-!-ne 1)" "(paxedit-put (paxedit-new) -!-:one 1)")
               ("(paxedit-put (paxedit-new) -!-:one 1)" "-!-(paxedit-put (paxedit-new) :one 1)")
               ("(paxedit-put (paxedit-new) :one 1-!-)" "-!-(paxedit-put (paxedit-new) :one 1)")
+              ("(paxedit-put (paxedit-new) :one-!- 1 ; Test
+)" "(paxedit-put (paxedit-new) -!-:one 1 ; Test
+)")
               ;; Comment backward up
               (";; hello -!-world" "-!-;; hello world"))
   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
@@ -408,7 +411,9 @@ when t '-!-(+ 1 2))" "(
               ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
                         (paxedit-sexp-raise)))
-               ("-!-" "message:: No SEXP found to raise.")))
+               ("-!-" "message:: No expression found to raise.")
+               ("(+ 1-!- 2)" "message:: No expression found to raise.")
+               ("1-!-342" "message:: No expression found to raise.")))
 
 (xt-deftest paxedit-wrap-comment
   (xtd-setup= (lambda (_) (let ((paxedit-alignment-cleanup nil))
@@ -453,3 +458,16 @@ when t '-!-(+ 1 2))" "(
                "(pax-some-function -!- :two 2)")
               ("(pax-some-function2 other-var :one -!-1 \"one\" :two 2 \"two\")"
                "(pax-some-function2 other-var -!- :two 2 \"two\")")))
+
+(xt-deftest paxedit-insert-semicolon
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
+                (paxedit-insert-semicolon))
+              ("-!-" ";;; -!-")
+              (";;; -!-" ";;; ;-!-")
+              ("(message \"-!-\")" "(message \";-!-\")")
+              ("(insert ?-!-)" "(insert ?;-!-)"))
+  (xtd-setup= (lambda (_) (paxedit-test-clojure-setup)
+                (paxedit-insert-semicolon))
+              ("-!-" ";;; -!-")
+              (";;; -!-" ";;; ;-!-")
+              ("(message \"-!-\")" "(message \";-!-\")")))
