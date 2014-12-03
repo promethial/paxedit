@@ -1037,8 +1037,9 @@ e.g. some-function-name, 123, 12_234."
   "Raises the expression the cursor is in while perserving the cursor location."
   (interactive)
   (let* ((expression-above? (save-excursion (paxedit-sexp-move-to-core-start)))
-         (expression-above-2? (save-excursion (goto-char expression-above?)
-                                              (paxedit-sexp-move-to-core-start))))
+         (expression-above-2? (when expression-above?
+                                (save-excursion (goto-char expression-above?)
+                                                (paxedit-sexp-move-to-core-start)))))
     (if (and expression-above?
              (paxedit-symbol-cursor-within?))
         (progn (paxedit-cursor (paxedit-symbol-current-boundary)

@@ -411,7 +411,9 @@ when t '-!-(+ 1 2))" "(
               ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
                         (paxedit-sexp-raise)))
-               ("-!-" "message:: No SEXP found to raise.")))
+               ("-!-" "message:: No expression found to raise.")
+               ("(+ 1-!- 2)" "message:: No expression found to raise.")
+               ("1-!-342" "message:: No expression found to raise.")))
 
 (xt-deftest paxedit-wrap-comment
   (xtd-setup= (lambda (_) (let ((paxedit-alignment-cleanup nil))
