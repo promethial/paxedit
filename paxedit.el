@@ -1252,6 +1252,27 @@ e.g. some-function-name, 123, 12_234."
     (select-window (split-window-right))
     (find-function it)))
 
+
+(defun paxedit-symbol-or-expression ()
+  "Returns the region of the symbol at point, or "
+  (or (paxedit-symbol-cursor-within?)
+      (paxedit-aand (paxedit-context-generate)
+                    (paxedit-get it :region))))
+
+(defun paxedit-wrap-parent-sexp ()
+  ""
+  (interactive)
+  (paxedit-awhen (paxedit-symbol-or-expression)
+    (goto-char (cl-first it))
+    (paredit-wrap-sexp)))
+
+(defun paxedit-wrap-symbol ()
+  "Wrap parenthesis around the current symbol."
+  (interactive)
+  (paxedit-awhen (paxedit-symbol-cursor-within?)
+    (goto-char (cl-first it))
+    (paredit-wrap-sexp)))
+
 ;;;###autoload
 (defun paxedit-sexp-close-newline ()
   "Faster version of the default paredit close round and newline procedure."
@@ -1393,7 +1414,7 @@ e.g. some-function-name, 123, 12_234."
     (setf paxedit-sexp-implicit-functions (eval (cl-first it))
           paxedit-sexp-implicit-structures (eval (cl-second it)))
     (mapc (lambda (function-association) (set (cl-first function-association)
-                                         (cl-rest function-association)))
+                                              (cl-rest function-association)))
           (cl-third it))))
 
 ;;; Setting Up Minor Mode
