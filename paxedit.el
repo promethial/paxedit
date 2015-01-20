@@ -1252,7 +1252,6 @@ e.g. some-function-name, 123, 12_234."
     (select-window (split-window-right))
     (find-function it)))
 
-
 (defun paxedit-symbol-or-expression ()
   "Returns the region of the symbol at point, or "
   (or (paxedit-symbol-cursor-within?)
@@ -1272,6 +1271,98 @@ e.g. some-function-name, 123, 12_234."
   (paxedit-awhen (paxedit-symbol-cursor-within?)
     (goto-char (cl-first it))
     (paredit-wrap-sexp)))
+
+;;; Formatting Commands
+
+(defun paxedit-map-last (f1 f2 xs)
+  "Returns a list where F1 is applied to all elements in XS except the last
+element which has F2 applied to it."
+  (let (result first)
+    (while xs
+      (setf first (car xs)
+            xs (cdr xs)
+            result (cons (funcall (if xs
+                                      f1
+                                    f2)
+                                  first)
+                         result)))
+    (reverse result)))
+
+(apply 'concat
+       (paxedit-map-last (lambda (x) (concat (char-to-string x)
+                                             (char-to-string ?|)))
+                         (lambda (x) (char-to-string x))
+                         (append paxedit-general-whitespace
+                                 paxedit-general-newline)))
+
+(defun paxedit-expression (&optional error-message)
+  "Return the expression map when the expression exists, and throw an exception with the specified ERROR-MESSAGE when expression not found. The default error message is thrown when ERROR-MESSAGE is not provided."
+  (paxedit-awhen (paxedit-context-generate)
+    (if (paxedit-get it :region)
+        it
+      (message (or error-message
+                   (paxedit-get it :message))))))
+
+(defun paxedit-dissolve ()
+  "Remove the enclosing parenthesis, and square or curly brackets to raise the sub-expressions.
+
+e.g.
+ (message -!-\"hello world\") -> message \"hello world\"
+
+ (+ [1 2 3 4]) -> (+ 1 2 3 4)
+"
+  (interactive)
+  (paxedit-awhen (paxedit-expression "No expression found to flatten.")
+    (paxedit-region-delete (cons (1- (cl-rest (paxedit-get it :region)))
+                                 (cl-rest (paxedit-get it :region))))
+    (paxedit-region-delete (cons (cl-first (paxedit-get it :region))
+                                 (1+ (cl-first (paxedit-get it :region-core)))))))
+
+(defun paxedit-flatten ()
+  "Remove all the newlines and extra spaces to condense expression
+and contained sub-expressions onto one line.
+
+e.g.
+ (if (> x 10)
+     (+ x
+        100)
+   x)
+
+-> M-x paxedit-flatten
+
+ (if (> x 10) (+ x 100) x)"
+  (interactive)
+  (paxedit-awhen (paxedit-expression "No expression found to flatten.")
+    (save-restriction
+      (paxedit-cursor
+       (narrow-to-region (cl-first (paxedit-get it :region))
+                         (cl-rest (paxedit-get it :region)))
+       (goto-char (point-min))
+       (while (search-forward-regexp (concat "["
+                                             paxedit-general-whitespace
+                                             paxedit-general-newline
+                                             "]+")
+                                     nil
+                                     t)
+         (replace-match " " nil t)))
+      ;; Fix left over space when cursor is exclusively
+      ;; in whitespace e.g. (+ 1\n -!-  2)
+      (when (cl-every (lambda (elt) (member elt paxedit-general-whitespace))
+                      (list (char-before)
+                            (char-after)))
+        (delete-char 1)))))
+
+(defun paxedit-format-1 ()
+  ""
+  (interactive)
+  (paxedit-awhen (paxedit-expression "No expression found to format.")
+    (paxedit-flatten)
+    (paxedit-cursor (goto-char (cl-first (paxedit-get it :region)))
+                    (paxedit-sexp-core-move-istart)
+                    (paxedit-sexp-forward)
+                    (while (and (paxedit-sexp-forward)
+                                (< (point) (cl-rest (paxedit-get it :region))))
+                      (insert "\n")))))
 
 ;;;###autoload
 (defun paxedit-sexp-close-newline ()
