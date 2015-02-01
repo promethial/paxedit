@@ -486,6 +486,12 @@ when t '-!-(+ 1 2))" "(
               ;; Cursor located in whitespace
               ("(+ 1\n -!- 2\n3)" "(+ 1 -!-2 3)")))
 
+(xt-deftest paxedit-format-1
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
+                (paxedit-format-1))
+              ("(-!-)" "(-!-)")
+              ("(1 2 -!-3)" "(-!-1\n 2\n 3)")))
+
 ;; (xt-deftest paxedit-format-1
 ;;   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
 ;;                 (paxedit-format-1))

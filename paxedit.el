@@ -1356,13 +1356,16 @@ e.g.
   ""
   (interactive)
   (paxedit-awhen (paxedit-expression "No expression found to format.")
-    (paxedit-flatten)
-    (paxedit-cursor (goto-char (cl-first (paxedit-get it :region)))
-                    (paxedit-sexp-core-move-istart)
-                    (paxedit-sexp-forward)
-                    (while (and (paxedit-sexp-forward)
-                                (< (point) (cl-rest (paxedit-get it :region))))
-                      (insert "\n")))))
+    ;; Operates in reverse order from end of expression to start
+    ;; of expression
+    (progn (goto-char (cl-rest (paxedit-get it :region)))
+           (cl-decf (point))
+           (paxedit-delete-whitespace)
+           (paxedit-sexp-backward)
+           (while (and (paxedit-sexp-backward)
+                       (> (point) (cl-first (paxedit-get it :region))))
+             (paxedit-delete-whitespace)
+             (insert "\n")))))
 
 ;;;###autoload
 (defun paxedit-sexp-close-newline ()
@@ -1512,7 +1515,50 @@ e.g.
 
 ;;;###autoload
 (define-minor-mode paxedit-mode
-  "Mode to enable Paxedit functionality and maintain keybindings."
+  "Major mode to enable Paxedit functionality.
+
+Paxedit is an Emacs extension which eliminates the work, tedium, and
+mistakes involved with manual editing and refactoring LISP
+code. Paxedit allows the quick refactoring of symbols, symbolic
+expressions (explicit and implicit), and comments. Normally a unique
+command or set of commands would allow a user to delete, copy, or
+transpose symbols, symbolic expressions, or comments. Additionally,
+after executing some delete or general refactoring commands the user
+must clean up any extraneous whitespace, correct indentation, and make
+sure all their expressions are balanced.
+
+Paxedit takes a departure from the above manual state of code editing
+through automation. Paxedit does away with multiple different
+commands. Paxedit knows when it’s in a symbol or a comment. Paxedit
+does the right thing in the right context. For example, Paxedit has
+one delete command which can be used to delete comments and symbolic
+expresions explicit and implicit. That is just one of many Paxedit’s
+context aware commands. Additionally, all Paxedit commands by default
+cleanup whitespace, fix indentation issues caused by refactoring, and
+expressions stay balanced.
+
+Context Navigation:
+
+`paxedit-backward-up' - Move to the start of the explicit expression,
+implicit expression or comment.
+
+`paxedit-backward-end' - Move to the end of the explicit expression,
+implicit expression or comment. 
+
+Context Refactoring:
+
+`paxedit-transpose-forward' - Swap the current explicit expression,
+implicit expression, symbol, or comment forward depending on what the
+cursor is on and what is available to swap with. This command is very
+versatile and will do the “right” thing in each context. See below for
+the different uses.
+
+`paxedit-transpose-backward' - Swaps the current explicit, implicit
+expression, symbol, or comment backward depending on what the cursor
+is on and what is available to swap with. Swaps in the opposite
+direction of paxedit-transpose-forward, see forward documentation for
+examples.
+"
   :init-value nil
   :lighter " Paxedit"
   :keymap (make-sparse-keymap)

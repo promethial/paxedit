@@ -432,24 +432,33 @@ Available to install via Melpa.
 (comment (message -!-"hello world")) ⟹ (message -!-"hello world")
       #+END_SRC
 ** Symbolic Expression Refactoring
-1. ~paxedit-flatten~ - Remove all the extraneous whitespace (e.g. newlines, tabs, spaces) to condense expression and contained sub-expressions onto one line.
+1. ~paxedit-compress~ - Remove all the extraneous whitespace (e.g. newlines, tabs, spaces) to condense expression and contained sub-expressions onto one line.
    #+BEGIN_SRC emacs-lisp
 (if -!-(> x 10)
   (+ x
      100)
   x)
 
-;;; ⟹ paxedit-flatten
+;;; ⟹ paxedit-compress
 
 (if -!-(> x 10) (+ x 100) x)
    #+END_SRC
-2. ~paxedit-dissolve~ - 
+2. ~paxedit-dissolve~ - Remove enclosing parenthesis, square brackets, curly brackets, or string quotes. In the case of strings, the user is prompted and asked if they would like to dissovle the enclosing quotes since doing so could unbalance the code through introduction of rogue parenthesis, brackets, and so on.
    #+BEGIN_SRC emacs-lisp
+(+ (1 -!-2 3)) ⟹ (+ 1 -!-2 3)
 
+["one" -!-"two"] ⟹ "one" -!-"two"
    #+END_SRC
-3. ~paxedit-format-1~ -
+3. ~paxedit-format-1~ - 
    #+BEGIN_SRC emacs-lisp
+(+ 1 2 -!-3 4)
 
+;;; ⟹ paxedit-format-1
+
+(+ 1
+   2
+   -!-3
+   4)
    #+END_SRC
 ** Symbol Refactoring
    1. ~paxedit-symbol-change-case~ - Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol.
