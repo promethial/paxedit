@@ -475,7 +475,9 @@ when t '-!-(+ 1 2))" "(
 (xt-deftest paxedit-dissolve
   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (paxedit-dissolve))
-              ("(+ -!-1 2)" "+ -!-1 2")))
+              ("(+ -!-1 2)" "+ -!-1 2")
+              ("(+ -!-1\n 2)" "+ -!-1\n 2")
+              ("(-!-)" "-!-")))
 
 (xt-deftest paxedit-flatten
   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)

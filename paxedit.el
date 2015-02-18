@@ -565,14 +565,16 @@ e.g. '-!-(message \"hello\") --> -!-'(message \"hello\")"
   (paxedit-awhen (paxedit-get-current-symbol)     ; If there is a symbol in the functional position intern and return
     (intern it)))
 
-(defun-paxedit-excursion paxedit-sexp-parent-function-symbol ()
-  "Return function symbol of the parent SEXP."
-  (when (paxedit-sexp-move-to-core-start 2)
-    (paxedit-sexp-core-get-functional-symbol)))
+;;; Get function symbol
 
 (defun-paxedit-excursion paxedit-sexp-function-symbol ()
   "Return function symbol of current SEXP."
   (when (paxedit-sexp-move-to-core-start 1)
+    (paxedit-sexp-core-get-functional-symbol)))
+
+(defun-paxedit-excursion paxedit-sexp-parent-function-symbol ()
+  "Return function symbol of the parent SEXP."
+  (when (paxedit-sexp-move-to-core-start 2)
     (paxedit-sexp-core-get-functional-symbol)))
 
 (defun-paxedit-excursion paxedit-sexp-core-region ()
@@ -785,6 +787,18 @@ e.g. some-function-name, 123, 12_234."
   "Verify if there is an implicit SEXP."
   (paxedit-contains-some? context :implicit-function :implicit-structure))
 
+(defun paxedit-cxt-sexp-string? (context)
+  "Verify if currently in a string SEXP."
+  (= (paxedit-get context :sexp-type) ?\"))
+
+(defun paxedit-cxt-sexp-at-end? (context)
+  "Verify if point is at end of expression."
+  (= (point) (cl-rest (paxedit-cxt-cboundary context))))
+
+(defun paxedit-cxt-sexp-at-core-start? (context)
+  "Verify if point is at the core start of expression."
+  (= (point) (cl-first (paxedit-cxt-cboundary context))))
+
 (defun-paxedit-excursion paxedit-cxt-topmost-sexp? (context)
   "Verify if context defined SEXP is topmost expression."
   (when (paxedit-cxt-sexp? context)
@@ -806,6 +820,15 @@ e.g. some-function-name, 123, 12_234."
                                         (lambda (x) (paxedit-region-contains-point x (point))))
     (elt (paxedit-get context :implicit-shape)
          it)))
+
+(defun paxedit-cxt-goto-expression-end (context)
+  "Go to the end of the expression."
+  (goto-char (cl-rest (paxedit-get context :region))))
+
+(defun paxedit-cxt-goto-expression-content-end (context)
+  "Go to the end of the expression content."
+  (paxedit-cxt-goto-expression-end context)
+  (cl-decf (point)))
 
 ;;; Cleanup Functions
 ;;; SEXP Deletion Cleanup
@@ -1062,7 +1085,16 @@ e.g. some-function-name, 123, 12_234."
 
 ;;;###autoload
 (defun paxedit-wrap-comment ()
-  "Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed."
+  "Wrap a comment macro around the current expression. If the current
+expression is already wrapped by a comment, then the wrapping comment
+is removed.
+
+Comment or uncomment the expression.
+ (message -!-\"hello world\") ⟹  (comment  (message -!-\"hello world\"))
+
+Executing the paxedit-wrap-comment function on a commented
+expression causes the comment to be removed.
+ (comment  (message -!-\"hello world\")) ⟹  (message -!-\"hello world\")"
   (interactive)
   (paxedit-awhen (paxedit-sexp-core-region)
     (if (equal 'comment (paxedit-sexp-parent-function-symbol))
@@ -1199,12 +1231,14 @@ e.g. some-function-name, 123, 12_234."
         context))))
 
 (defun paxedit-context-default (context)
-  "If context is detected as non-nil, then display a message stating no context was found."
+  "If context is detected as non-nil, then display a message stating no
+context was found."
   (when context
     (message (gethash :message context))))
 
 (defun paxedit-implicit-sexp-up (&optional start)
-  "Move to the start of the implicit SEXP if START is true, else go to the end of the implicit SEXP."
+  "Move to the start of the implicit SEXP if START is true, else go to
+the end of the implicit SEXP."
   (paxedit-aand (paxedit-context-generate)
                 (and (paxedit-cxt-implicit-sexp? it)
                      (paxedit-cxt-implicit-get-current-sexp it))
@@ -1288,35 +1322,32 @@ element which has F2 applied to it."
                          result)))
     (reverse result)))
 
-(apply 'concat
-       (paxedit-map-last (lambda (x) (concat (char-to-string x)
-                                             (char-to-string ?|)))
-                         (lambda (x) (char-to-string x))
-                         (append paxedit-general-whitespace
-                                 paxedit-general-newline)))
-
 (defun paxedit-expression (&optional error-message)
-  "Return the expression map when the expression exists, and throw an exception with the specified ERROR-MESSAGE when expression not found. The default error message is thrown when ERROR-MESSAGE is not provided."
+  "Return the expression map when the expression exists, and throw an
+exception with the specified ERROR-MESSAGE when expression not
+found. The default error message is thrown when ERROR-MESSAGE is not
+provided."
   (paxedit-awhen (paxedit-context-generate)
     (if (paxedit-get it :region)
         it
-      (message (or error-message
-                   (paxedit-get it :message))))))
+      (error (or error-message
+                 (paxedit-get it :message))))))
 
 (defun paxedit-dissolve ()
-  "Remove the enclosing parenthesis, and square or curly brackets to raise the sub-expressions.
+  "Remove the enclosing parenthesis, and square or curly brackets to
+raise the sub-expressions.
 
-e.g.
- (message -!-\"hello world\") -> message \"hello world\"
+e.g.  (message -!-\"hello world\") -> message \"hello world\"
 
- (+ [1 2 3 4]) -> (+ 1 2 3 4)
-"
+ (+ [1 2 3 4]) -> (+ 1 2 3 4)"
   (interactive)
-  (paxedit-awhen (paxedit-expression "No expression found to flatten.")
-    (paxedit-region-delete (cons (1- (cl-rest (paxedit-get it :region)))
-                                 (cl-rest (paxedit-get it :region))))
-    (paxedit-region-delete (cons (cl-first (paxedit-get it :region))
-                                 (1+ (cl-first (paxedit-get it :region-core)))))))
+  (paxedit-awhen (paxedit-expression "No expression found to dissolve.")
+    (when (or (not (paxedit-cxt-sexp-string? it))
+              (yes-or-no-p "Are you sure you want to dissolve a string? This can unbalance the code."))
+      (paxedit-region-delete (cons (1- (cl-rest (paxedit-get it :region)))
+                                   (cl-rest (paxedit-get it :region))))
+      (paxedit-region-delete (cons (cl-first (paxedit-get it :region))
+                                   (1+ (cl-first (paxedit-get it :region-core))))))))
 
 (defun paxedit-flatten ()
   "Remove all the newlines and extra spaces to condense expression
@@ -1358,18 +1389,25 @@ e.g.
   (paxedit-awhen (paxedit-expression "No expression found to format.")
     ;; Operates in reverse order from end of expression to start
     ;; of expression
-    (progn (goto-char (cl-rest (paxedit-get it :region)))
-           (cl-decf (point))
-           (paxedit-delete-whitespace)
-           (paxedit-sexp-backward)
-           (while (and (paxedit-sexp-backward)
-                       (> (point) (cl-first (paxedit-get it :region))))
-             (paxedit-delete-whitespace)
-             (insert "\n")))))
+    (paxedit-cxt-goto-expression-content-end it)
+    (paxedit-delete-whitespace)
+    (while (and (paxedit-sexp-backward)
+                (not (paxedit-cxt-sexp-at-core-start? it)))
+      (paxedit-delete-whitespace)
+      (insert "\n"))
+    (forward-char 1)
+    (paxedit-delete-whitespace)
+    (paxedit-awhen (paxedit-context-generate)
+      (paxedit-sexp-forward)
+      (unless (paxedit-cxt-sexp-at-end? it )
+        (paxedit-delete-whitespace)
+        (insert " ")))
+    (indent-according-to-mode)))
 
 ;;;###autoload
 (defun paxedit-sexp-close-newline ()
-  "Faster version of the default paredit close round and newline procedure."
+  "Faster version of the default paredit close round and newline
+procedure."
   (interactive)
   (paxedit-awhen (paxedit-sexp-region)
     (goto-char (cl-rest it))
@@ -1379,7 +1417,29 @@ e.g.
 
 (paxedit-buffer-local-interactive-function paxedit-insert-semicolon
                                            paxedit-insert-semicolon-elisp
-                                           "Insert comment or semicolon depending on the location (or context) of the cursor. If the cursor is in a string, comment, or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute paredit-comment-dwim to insert comment.")
+                                           "Insert comment or semicolon depending on the location (or context) of
+the cursor. If the cursor is in a string, comment, or creating a
+character (?; in elisp or Clojure's ';') insert semicolon else execute
+paredit-comment-dwim to insert comment.
+
+Typing semicolon into a lisp buffer results in inserting of a comment
+(three semicolons).
+
+-!-
+
+⟹
+
+;;; -!-
+
+Typing semicolon in a string results in insertion of semicolon.
+
+(message \"hello -!-\")
+
+⟹
+
+(message \"hello ;\")
+
+         ")
 
 (defun paxedit-insert-semicolon-elisp ()
   "Elisp implementation of paxedit-insert-semicolon."
@@ -1415,7 +1475,35 @@ e.g.
 
 ;;;###autoload
 (defun paxedit-backward-up (&optional n)
-  "Move to the start of the explicit expression, implicit expression or comment."
+  "Move to the start of the explicit expression, implicit expression
+or comment.
+
+Explicit expression
+ (+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 -!-(+ 3 4))
+
+Implicit expression
+
+Implicit structures, Clojure maps
+
+ {:one 1
+  :two -!-2
+  :three 3}
+
+ ⟹
+
+    {:one 1
+  -!-:two 2
+     :three 3}
+
+In the context of a comment, the cursor will jump to the start of the
+comment
+
+ ;;; While in some comment -!-editing
+
+ ⟹
+
+ -!-;;; While in some comment editing
+"
   (interactive "p")
   (dotimes (_ n)
     (or (paxedit-comment-backward :start)
@@ -1424,7 +1512,32 @@ e.g.
 
 ;;;###autoload
 (defun paxedit-backward-end (&optional n)
-  "Move to the end of the explicit expression, implicit expression or comment."
+  "Move to the end of the explicit expression, implicit expression or comment.
+
+Explicit expression
+ (+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 (+ 3 4)-!-)
+
+Implicit expression
+
+Implicit structures, Clojure maps
+
+ {:one 1
+  :two -!-2
+  :three 3}
+
+⟹
+
+ {:one 1
+  :two 2-!-
+  :three 3}
+
+In the context of a comment, the cursor will jump to the start of the comment
+
+;;; While in some comment -!-editing
+
+⟹
+
+;;; While in some comment editing-!-"
   (interactive "p")
   (dotimes (_ n)
     (or (paxedit-comment-backward :end)
@@ -1472,7 +1585,8 @@ e.g.
 
 ;;;###autoload
 (defun paxedit-copy (&optional n)
-  "Copy current explicit expression, implicit expression, or comment."
+  "Copy current explicit expression, implicit expression, or
+comment."
   (interactive "p")
   (cl-letf (((symbol-function 'paxedit-region-kill) #'paxedit-region-copy)
             (paxedit-message-kill paxedit-message-copy))
@@ -1480,7 +1594,9 @@ e.g.
 
 ;;;###autoload
 (defun paxedit-delete (&optional n)
-  "Delete current explicit expression, implicit expression, or comment. Also cleans up the left-over whitespace from deletion and corrects indentation."
+  "Delete current explicit expression, implicit expression, or
+comment. Also cleans up the left-over whitespace from deletion and
+corrects indentation."
   (interactive "p")
   (cl-letf (((symbol-function 'paxedit-region-kill) #'paxedit-region-delete)
             (paxedit-message-kill paxedit-message-delete))
@@ -1490,13 +1606,66 @@ e.g.
 
 ;;;###autoload
 (defun paxedit-transpose-forward (&optional n)
-  "Swap the current explicit expression, implicit expression, symbol, or comment forward depending on what the cursor is on and what is available to swap with. This command is very versatile and will do the \"right\" thing in each context."
+  "Swap the current explicit expression, implicit expression, symbol,
+or comment forward depending on what the cursor is on and what is
+available to swap with. This command is very versatile and will do
+the \"right\" thing in each context.
+
+Swapping symbols, place the cursor within the symbol and run the
+shortcut for paxedit-transpose-forward to swap places with the next
+symbol or expression while preserving cursor and correctly
+reindenting.
+
+ (+ tw-!-o one three) ⟹ (+ one tw-!-o three)
+
+ (+ 1-!-0 (+ 2 3)) ⟹ (+ (+ 2 3) 1-!-0)
+
+Swapping expressions, place the cursor anywhere not within a symbol
+and the containing expression can be swapped with the next expression.
+ (concat \"-!-world!\" \"Hello \") ⟹ (concat \"Hello \" \"-!-world!\")
+
+ (- (+ -!-3 4) (+ 100 200)) ⟹ (- (+ 100 200) (+ -!-3 4))
+
+Swapped expressions are properly indented
+ (if some-condition
+     (-!-message \"It's false\")
+   (message \"It's true\"))
+
+ ;;; ⟹
+
+ (if some-condition
+     (message \"It's true\")
+   (-!-message \"It's false\"))
+
+Swapping expressions implicit structures e.g. Clojure maps
+ {:two-!- 2
+  :one 1
+  :three 3}
+
+ ;;; ⟹
+
+ {:one 1
+  :two-!- 2
+  :three 3}
+
+Swapping comments
+
+ ;;; should be-!- last
+ ;;; should be first
+
+⟹
+
+ ;;; should be first
+ ;;; should be-!- last"
   (interactive "p")
   (paxedit-context-refactor-sexp :forward n))
 
 ;;;###autoload
 (defun paxedit-transpose-backward (&optional n)
-  "Swaps the current explicit, implicit expression, symbol, or comment backward depending on what the cursor is on and what is available to swap with. Swaps in the opposite direction of paxedit-transpose-forward."
+  "Swaps the current explicit, implicit expression, symbol, or comment
+backward depending on what the cursor is on and what is available to
+swap with. Swaps in the opposite direction of
+`paxedit-transpose-forward', see forward documentation for examples."
   (interactive "p")
   (paxedit-context-refactor-sexp :backward n))
 
@@ -1543,7 +1712,7 @@ Context Navigation:
 implicit expression or comment.
 
 `paxedit-backward-end' - Move to the end of the explicit expression,
-implicit expression or comment. 
+implicit expression or comment.
 
 Context Refactoring:
 
@@ -1558,7 +1727,68 @@ expression, symbol, or comment backward depending on what the cursor
 is on and what is available to swap with. Swaps in the opposite
 direction of paxedit-transpose-forward, see forward documentation for
 examples.
-"
+
+`paxedit-delete' - Delete current explicit expression, implicit
+expression, or comment. Also cleans up the left-over whitespace from
+deletion and corrects indentation.
+
+`paxedit-kill' - Kill current explicit expression, implicit
+expression, or comment. Also cleans up left-over whitespace from kill
+and corrects indentation.
+
+`paxedit-copy' - Copy current explicit expression, implicit
+expression, or comment.
+
+`paxedit-sexp-raise' - Raises the expression the cursor is in while
+perserving the cursor location.
+
+`paxedit-insert-semicolon' - Insert comment or semicolon depending on
+the location (or context) of the cursor. If the cursor is in a string,
+comment, or creating a character (?; in elisp or Clojure's ';') insert
+semicolon else execute paredit-comment-dwim to insert comment.
+
+`paxedit-wrap-comment' - Wrap a comment macro around the current
+expression. If the current expression is already wrapped by a comment,
+then the wrapping comment is removed.
+
+Symbolic Expression Refactoring:
+
+`paxedit-compress' - Remove all the extraneous whitespace
+(e.g. newlines, tabs, spaces) to condense expression and contained
+sub-expressions onto one line.
+
+`paxedit-dissolve' - Remove enclosing parenthesis, square brackets,
+curly brackets, or string quotes. In the case of strings, the user is
+prompted and asked if they would like to dissovle the enclosing quotes
+since doing so could unbalance the code through introduction of rogue
+parenthesis, brackets, and so on.
+
+`paxedit-format-1' -
+
+Symbol Refactoring:
+
+`paxedit-symbol-change-case' - Change the symbol to all uppercase if any
+of the symbol characters are lowercase, else lowercase the whole
+symbol.
+
+`paxedit-symbol-kill' - Kill the symbol the text cursor is next to or in
+and cleans up the left-over whitespace from kill.
+
+`paxedit-symbol-delete' - Delete the symbol the text cursor is next to
+or in and cleans up the left-over whitespace from delete.
+
+Debugging
+
+`paxedit-macro-expand-replace' - Expand the current expression in its
+place if it is macro.
+
+Whitespace & Indentation:
+
+`paxedit-cleanup' - Indent the buffer according to the rules of the
+current mode.
+
+`paxedit-delete-whitespace' - Delete all whitespace to the right and
+left of the cursor."
   :init-value nil
   :lighter " Paxedit"
   :keymap (make-sparse-keymap)
