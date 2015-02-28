@@ -441,7 +441,8 @@ when t '-!-(+ 1 2))" "(
                 (goto-char (point-max))
                 (insert " ")
                 (call-interactively 'yank))
-              ("(+ 1 2-!-)" "(+ 1 2) (+ 1 2)-!-")))
+              ("(+ 1 2-!-)" "(+ 1 2) (+ 1 2)-!-")
+              ("(+ 1 -!-2)" "(+ 1 2) (+ 1 2)-!-")))
 
 (xt-deftest paxedit-symbol-change-case
   (xtd-setup= (lambda (_) (call-interactively 'paxedit-symbol-change-case))
@@ -491,10 +492,5 @@ when t '-!-(+ 1 2))" "(
 (xt-deftest paxedit-format-1
   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
                 (paxedit-format-1))
-              ("(-!-)" "(-!-)")
-              ("(1 2 -!-3)" "(-!-1\n 2\n 3)")))
-
-;; (xt-deftest paxedit-format-1
-;;   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
-;;                 (paxedit-format-1))
-;;               ("(+ -!-1 2)" "(+ -!-1\n   2)")))
+              ("(-!-)" "()-!-")
+              ("(1 2 -!-3)" "(1 -!-2\n   3)")))

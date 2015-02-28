@@ -449,7 +449,7 @@ Available to install via Melpa.
 
 ["one" -!-"two"] ⟹ "one" -!-"two"
    #+END_SRC
-3. ~paxedit-format-1~ - 
+3. ~paxedit-format-1~ - Expression will be formatted to have one expression per line after the first two expression. Currently, this command does not preserve the cursor position.
    #+BEGIN_SRC emacs-lisp
 (+ 1 2 -!-3 4)
 

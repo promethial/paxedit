@@ -1111,7 +1111,8 @@ expression causes the comment to be removed.
 
 ;;;###autoload
 (defun paxedit-macro-expand-replace ()
-  "Replace the current expression (if there is a macro in the functional position) with its macro expansion."
+  "Replace the current expression (if there is a macro in the functional
+position) with its macro expansion."
   (interactive)
   (paxedit-awhen (paxedit-context-generate)
     (if (functionp (paxedit-get it :function-symbol))
@@ -1402,7 +1403,7 @@ e.g.
       (unless (paxedit-cxt-sexp-at-end? it )
         (paxedit-delete-whitespace)
         (insert " ")))
-    (indent-according-to-mode)))
+    (paxedit-reindent-defun)))
 
 ;;;###autoload
 (defun paxedit-sexp-close-newline ()
@@ -1583,12 +1584,15 @@ In the context of a comment, the cursor will jump to the start of the comment
       (paxedit-sexp-kill n)
       (message paxedit-message-kill)))
 
+(defun paxedit-do-nothing ()
+  "Function does nothing.")
+
 ;;;###autoload
 (defun paxedit-copy (&optional n)
-  "Copy current explicit expression, implicit expression, or
-comment."
+  "Copy current explicit expression, implicit expression, or comment."
   (interactive "p")
   (cl-letf (((symbol-function 'paxedit-region-kill) #'paxedit-region-copy)
+            ((symbol-function 'paxedit-sexp-removal-cleanup) #'paxedit-do-nothing)
             (paxedit-message-kill paxedit-message-copy))
     (paxedit-kill n)))
 
