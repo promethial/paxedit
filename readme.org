@@ -455,9 +455,9 @@ Available to install via Melpa.
 
 ;;; ⟹ paxedit-format-1
 
-(+ 1
+(+ -!-1
    2
-   -!-3
+   3
    4)
    #+END_SRC
 ** Symbol Refactoring
