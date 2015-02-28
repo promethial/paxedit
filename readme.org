@@ -25,6 +25,7 @@ Paxedit takes a departure from the above manual state of code editing through au
  - [[#functionality][Functionality]]
      - [[#context-navigation][Context Navigation]]
      - [[#context-refactoring][Context Refactoring]]
+     - [[#symbolic-expression-refactoring][Symbolic Expression Refactoring]]
      - [[#symbol-refactoring][Symbol Refactoring]]
      - [[#debugging][Debugging]]
      - [[#whitespace--indentation][Whitespace & Indentation]]
@@ -430,6 +431,35 @@ Available to install via Melpa.
 ;;; expression causes the comment to be removed.
 (comment (message -!-"hello world")) ⟹ (message -!-"hello world")
       #+END_SRC
+** Symbolic Expression Refactoring
+1. ~paxedit-compress~ - Remove all the extraneous whitespace (e.g. newlines, tabs, spaces) to condense expression and contained sub-expressions onto one line.
+   #+BEGIN_SRC emacs-lisp
+(if -!-(> x 10)
+  (+ x
+     100)
+  x)
+
+;;; ⟹ paxedit-compress
+
+(if -!-(> x 10) (+ x 100) x)
+   #+END_SRC
+2. ~paxedit-dissolve~ - Remove enclosing parenthesis, square brackets, curly brackets, or string quotes. In the case of strings, the user is prompted and asked if they would like to dissovle the enclosing quotes since doing so could unbalance the code through introduction of rogue parenthesis, brackets, and so on.
+   #+BEGIN_SRC emacs-lisp
+(+ (1 -!-2 3)) ⟹ (+ 1 -!-2 3)
+
+["one" -!-"two"] ⟹ "one" -!-"two"
+   #+END_SRC
+3. ~paxedit-format-1~ - Expression will be formatted to have one expression per line after the first two expression. Currently, this command does not preserve the cursor position.
+   #+BEGIN_SRC emacs-lisp
+(+ 1 2 -!-3 4)
+
+;;; ⟹ paxedit-format-1
+
+(+ 1
+   2
+   -!-3
+   4)
+   #+END_SRC
 ** Symbol Refactoring
    1. ~paxedit-symbol-change-case~ - Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol.
       #+BEGIN_SRC emacs-lisp

@@ -410,7 +410,7 @@ when t '-!-(+ 1 2))" "(
               ("-!-" "-!-")
               ("(concat user-me-!-ssage name)" "user-me-!-ssage"))
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (concat "message:: " output))))
-                        (paxedit-sexp-raise)))
+                             (paxedit-sexp-raise)))
                ("-!-" "message:: No expression found to raise.")
                ("(+ 1-!- 2)" "message:: No expression found to raise.")
                ("1-!-342" "message:: No expression found to raise.")))
@@ -441,7 +441,8 @@ when t '-!-(+ 1 2))" "(
                 (goto-char (point-max))
                 (insert " ")
                 (call-interactively 'yank))
-              ("(+ 1 2-!-)" "(+ 1 2) (+ 1 2)-!-")))
+              ("(+ 1 2-!-)" "(+ 1 2) (+ 1 2)-!-")
+              ("(+ 1 -!-2)" "(+ 1 2) (+ 1 2)-!-")))
 
 (xt-deftest paxedit-symbol-change-case
   (xtd-setup= (lambda (_) (call-interactively 'paxedit-symbol-change-case))
@@ -471,3 +472,25 @@ when t '-!-(+ 1 2))" "(
               ("-!-" ";;; -!-")
               (";;; -!-" ";;; ;-!-")
               ("(message \"-!-\")" "(message \";-!-\")")))
+
+(xt-deftest paxedit-dissolve
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
+                (paxedit-dissolve))
+              ("(+ -!-1 2)" "+ -!-1 2")
+              ("(+ -!-1\n 2)" "+ -!-1\n 2")
+              ("(-!-)" "-!-")))
+
+(xt-deftest paxedit-flatten
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
+                (paxedit-flatten))
+              ("(+-!- 1\n2\n3)" "(+-!- 1 2 3)")
+              ("[1 \n2-!- \n3]" "[1 2-!- 3]")
+              ;; Edge Case
+              ;; Cursor located in whitespace
+              ("(+ 1\n -!- 2\n3)" "(+ 1 -!-2 3)")))
+
+(xt-deftest paxedit-format-1
+  (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
+                (paxedit-format-1))
+              ("(-!-)" "()-!-")
+              ("(1 2 -!-3)" "(1 -!-2\n   3)")))
