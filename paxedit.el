@@ -1350,7 +1350,7 @@ e.g.  (message -!-\"hello world\") -> message \"hello world\"
       (paxedit-region-delete (cons (cl-first (paxedit-get it :region))
                                    (1+ (cl-first (paxedit-get it :region-core))))))))
 
-(defun paxedit-flatten ()
+(defun paxedit-compress ()
   "Remove all the newlines and extra spaces to condense expression
 and contained sub-expressions onto one line.
 
@@ -1360,7 +1360,7 @@ e.g.
         100)
    x)
 
--> M-x paxedit-flatten
+-> M-x paxedit-compress
 
  (if (> x 10) (+ x 100) x)"
   (interactive)

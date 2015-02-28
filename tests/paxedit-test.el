@@ -480,9 +480,9 @@ when t '-!-(+ 1 2))" "(
               ("(+ -!-1\n 2)" "+ -!-1\n 2")
               ("(-!-)" "-!-")))
 
-(xt-deftest paxedit-flatten
+(xt-deftest paxedit-compress
   (xtd-setup= (lambda (_) (paxedit-test-elisp-setup)
-                (paxedit-flatten))
+                (paxedit-compress))
               ("(+-!- 1\n2\n3)" "(+-!- 1 2 3)")
               ("[1 \n2-!- \n3]" "[1 2-!- 3]")
               ;; Edge Case
