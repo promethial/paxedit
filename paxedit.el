@@ -888,7 +888,8 @@ e.g. some-function-name, 123, 12_234."
 
 ;;;###autoload
 (defun paxedit-cleanup ()
-  "Indent buffer as defined by mode, remove tabs, and delete trialing whitespace."
+  "Indent buffer as defined by mode, remove tabs, and delete trialing
+whitespace."
   (interactive)
   (paxedit-indent-buffer)
   (paxedit-untabify-buffer)
@@ -920,7 +921,8 @@ e.g. some-function-name, 123, 12_234."
 
 ;;;###autoload
 (defun paxedit-symbol-kill ()
-  "Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill."
+  "Kill the symbol the text cursor is next to or in and cleans up the
+left-over whitespace from kill."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
       (progn (paxedit-region-kill it)
@@ -929,7 +931,8 @@ e.g. some-function-name, 123, 12_234."
 
 ;;;###autoload
 (defun paxedit-symbol-change-case ()
-  "Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol."
+  "Change the symbol to all uppercase if any of the symbol characters are
+lowercase, else lowercase the whole symbol."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
       (funcall (if (let ((case-fold-search nil))
@@ -942,7 +945,8 @@ e.g. some-function-name, 123, 12_234."
 
 ;;;###autoload
 (defun paxedit-symbol-occur ()
-  "Search for symbol the cursor is on or next to in the current buffer with occur."
+  "Search for symbol the cursor is on or next to in the current buffer
+with occur."
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
       (progn (occur (paxedit-region-string it))
@@ -951,14 +955,32 @@ e.g. some-function-name, 123, 12_234."
 
 ;;;###autoload
 (defun paxedit-next-symbol (&optional n)
-  "Go to the next symbol."
+  "Go to the next symbol regardless of what may seperate the
+symbols. Will move to next symbol regardless if the next
+symbol is at a different depth.
+
+e.g.
+ (print-!- (* 123 456))
+
+-> paxedit-previous-symbol
+
+ (print (*-!- 123 456))"
   (interactive "p")
   (dotimes (_ n)
     (paxedit-move-to-symbol t)))
 
 ;;;###autoload
 (defun paxedit-previous-symbol (&optional n)
-  "Go to the previous symbol."
+  "Go to the previous symbol regardless of what may seperate the
+symbols. Will move to previous symbol regardless if the previous
+symbol is at a different depth.
+
+e.g.
+ (print (*-!- 123 456))
+
+-> paxedit-previous-symbol
+
+ (print-!- (* 123 456))"
   (interactive "p")
   (dotimes (_ n)
     (paxedit-move-to-symbol nil)))
