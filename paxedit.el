@@ -131,7 +131,7 @@
 ;;; Default Major Mode Associations
 (defvar paxedit-assoc '((emacs-lisp-mode . (paxedit-implicit-functions-elisp
                                             ;; Elisp does not have any
-                                            ;; implicit strucutrues
+                                            ;; implicit structures
                                             nil
                                             ;; Mode specific function implementation
                                             ((paxedit-insert-semicolon . paxedit-insert-semicolon-elisp))))
@@ -139,7 +139,7 @@
                                          paxedit-implicit-structures-clojure
                                          ;; Mode specific function implementation
                                          ((paxedit-insert-semicolon . paxedit-insert-semicolon-clojure)))))
-  "Associate major mode with implicit functions and strucuture.")
+  "Associate major mode with implicit functions and structure.")
 
 ;;; Paxedit Defaults
 
@@ -157,7 +157,7 @@
 
 (defvar paxedit-general-whitespace '(?\s
                                      ?\t)
-  "White space.")
+  "Whitespace.")
 
 (defvar paxedit-general-newline '(?\n
                                   ?\r)

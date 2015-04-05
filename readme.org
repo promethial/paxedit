@@ -7,7 +7,7 @@
 #+END_CENTER
 Paxedit is an Emacs extension which eliminates the work, tedium, and mistakes involved with manual editing and refactoring LISP code. Paxedit allows the quick refactoring of symbols, symbolic expressions (explicit and implicit), and comments. Normally a unique command or set of commands would allow a user to delete, copy, or transpose symbols, symbolic expressions, or comments. Additionally, after executing some delete or general refactoring commands the user must clean up any extraneous whitespace, correct indentation, and make sure all their expressions are balanced.
 
-Paxedit takes a departure from the above manual state of code editing through automation. Paxedit does away with multiple different commands. Paxedit knows when it's in a symbol or a comment. *Paxedit does the right thing in the right context.* For example, Paxedit has one delete command which can be used to delete comments and symbolic expresions explicit and implicit. That is just one of many Paxedit's context aware commands. Additionally, all Paxedit commands by default cleanup whitespace, fix indentation issues caused by refactoring, and expressions stay balanced.
+Paxedit takes a departure from the above manual state of code editing through automation. Paxedit does away with multiple different commands. Paxedit knows when it's in a symbol or a comment. *Paxedit does the right thing in the right context.* For example, Paxedit has one delete command which can be used to delete comments and symbolic expressions explicit and implicit. That is just one of many Paxedit's context aware commands. Additionally, all Paxedit commands by default cleanup whitespace, fix indentation issues caused by refactoring, and expressions stay balanced.
 #+END_ABSTRACT
 #+LATEX: \tableofcontents
 #+TOC: nil
@@ -105,7 +105,7 @@ Paxedit understands functions with implicit associations among its arguments (th
 ;;; The variable a is associated with the value 10 in setf.
 ;;; It would be convenient if we could manipulate the
 ;;; variables and their values as a unit for refactoring
-;;; pursposes. For example, we might want to delete the
+;;; purposes. For example, we might want to delete the
 ;;; pair 'b 20' in one command. Paxedit allows exactly that.
 
 ;;; Deleting implicit expression
@@ -182,7 +182,7 @@ Available to install via Melpa.
    #+END_SRC
 2. Adding new implicit functions. /If new implicit functions are added, paxedit-mode must be disabled and re-enabled for the changes to take effect./
    #+BEGIN_SRC emacs-lisp
-;;; Elisp function with implicit strucutre of two starting
+;;; Elisp function with implicit structure of two starting
 ;;; at first argument.
 
 (some-function first 1
@@ -231,7 +231,7 @@ Available to install via Melpa.
                                             nil))
                         (clojure-mode . (paxedit-implicit-functions-clojure
                                          paxedit-implicit-structures-clojure)))
-  "Associate major mode with implicit functions and strucuture.")
+  "Associate major mode with implicit functions and structure.")
 
 ;;; Adding a new language
 
@@ -303,7 +303,7 @@ Available to install via Melpa.
 ;;; Swapping symbols, place the cursor within the symbol and run the
 ;;; shortcut for paxedit-transpose-forward to swap places with the
 ;;; next symbol or expression while preserving cursor and correctly
-;;; reindenting.
+;;; re-indenting.
 (+ tw-!-o one three) ⟹ (+ one tw-!-o three)
 
 (+ 1-!-0 (+ 2 3)) ⟹ (+ (+ 2 3) 1-!-0)
@@ -383,7 +383,7 @@ Available to install via Melpa.
       #+END_SRC
    4. ~paxedit-kill~ - Kill current explicit expression, implicit expression, or comment. Also cleans up left-over whitespace from kill and corrects indentation.
    5. ~paxedit-copy~ - Copy current explicit expression, implicit expression, or comment.
-   8. ~paxedit-sexp-raise~ - Raises the expression the cursor is in while perserving the cursor location.
+   8. ~paxedit-sexp-raise~ - Raises the expression the cursor is in while preserving the cursor location.
       #+BEGIN_SRC emacs-lisp
 (when t
   (message -!-"hello world"))
@@ -443,7 +443,7 @@ Available to install via Melpa.
 
 (if -!-(> x 10) (+ x 100) x)
    #+END_SRC
-2. ~paxedit-dissolve~ - Remove enclosing parenthesis, square brackets, curly brackets, or string quotes. In the case of strings, the user is prompted and asked if they would like to dissovle the enclosing quotes since doing so could unbalance the code through introduction of rogue parenthesis, brackets, and so on.
+2. ~paxedit-dissolve~ - Remove enclosing parenthesis, square brackets, curly brackets, or string quotes. In the case of strings, the user is prompted and asked if they would like to dissolve the enclosing quotes since doing so could unbalance the code through introduction of rogue parenthesis, brackets, and so on.
    #+BEGIN_SRC emacs-lisp
 (+ (1 -!-2 3)) ⟹ (+ 1 -!-2 3)
 
@@ -509,7 +509,7 @@ HELL-!-O ⟹ hell-!-o
 * Other Notes & Performance
 1. Context dependent actions have certain limits and trade-offs. There had to be decisions made on whether to go for precisely similar behavior across commands or some variation due to pragmatic considerations.
 2. This code was written with a focus on clarity rather than efficiency.
-   1. Implicit SEXPs of large size (the number of symbols or expressions in the SEXP) may be slow during deletion and refactoring. On a 2.3ghz, quad-core I7 processor, implicit expressions of size greater than 150 expressions became noticeably slow to refactor.
+   1. Implicit SEXPs of large size (the number of symbols or expressions in the SEXP) may be slow during deletion and refactoring. On a 2.3GHz, quad-core I7 processor, implicit expressions of size greater than 150 expressions became noticeably slow to refactor.
 * Inspiration
 1. Paredit - http://www.emacswiki.org/emacs/ParEdit
 2. Brett Victor's, Inventing on Principle Talk
