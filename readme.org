@@ -113,7 +113,7 @@ Paxedit understands functions with implicit associations among its arguments (th
 (setf a 10
       b-!- 20)
 
-;;; ⟹ (paxedit-delete)
+;;; -> (paxedit-delete)
 
 (setf a 10-!-)
 
@@ -122,7 +122,7 @@ Paxedit understands functions with implicit associations among its arguments (th
 (setf b 20
       a-!- 10)
 
-;;; ⟹ (paxedit-transpose-backward)
+;;; -> (paxedit-transpose-backward)
 
 (setf a-!- 10
       b 20)
@@ -246,7 +246,7 @@ Available to install via Melpa.
    1. ~paxedit-backward-up~ - Move to the start of the explicit expression, implicit expression or comment.
       #+BEGIN_SRC emacs-lisp
 ;;; Explicit expression
-(+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 -!-(+ 3 4))
+(+ 1 2 (+ 3 -!-4)) -> (+ 1 2 -!-(+ 3 4))
 
 ;;; Implicit expression
 
@@ -256,7 +256,7 @@ Available to install via Melpa.
  :two -!-2
  :three 3}
 
-;;; ⟹
+;;; ->
 
    {:one 1
  -!-:two 2
@@ -266,14 +266,14 @@ Available to install via Melpa.
 
 (message "hello world")       ; While in some comment -!-editing
 
-;;; ⟹
+;;; ->
 
 (message "hello world")    -!-; While in some comment editing
       #+END_SRC
    2. ~paxedit-backward-end~ - Move to the end of the explicit expression, implicit expression or comment.
       #+BEGIN_SRC emacs-lisp
 ;;; Explicit expression
-(+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 (+ 3 4)-!-)
+(+ 1 2 (+ 3 -!-4)) -> (+ 1 2 (+ 3 4)-!-)
 
 ;;; Implicit expression
 
@@ -283,7 +283,7 @@ Available to install via Melpa.
  :two -!-2
  :three 3}
 
-;;; ⟹
+;;; ->
 
 {:one 1
  :two 2-!-
@@ -293,7 +293,7 @@ Available to install via Melpa.
 
 (message "hello world")       ; While in some comment -!-editing
 
-;;; ⟹
+;;; ->
 
 (message "hello world")       ; While in some comment editing-!-
       #+END_SRC
@@ -304,23 +304,23 @@ Available to install via Melpa.
 ;;; shortcut for paxedit-transpose-forward to swap places with the
 ;;; next symbol or expression while preserving cursor and correctly
 ;;; re-indenting.
-(+ tw-!-o one three) ⟹ (+ one tw-!-o three)
+(+ tw-!-o one three) -> (+ one tw-!-o three)
 
-(+ 1-!-0 (+ 2 3)) ⟹ (+ (+ 2 3) 1-!-0)
+(+ 1-!-0 (+ 2 3)) -> (+ (+ 2 3) 1-!-0)
 
 ;;; Swapping expressions, place the cursor anywhere not within a
 ;;; symbol and the containing expression can be swapped with the next
 ;;; expression.
-(concat "-!-world!" "Hello ") ⟹ (concat "Hello " "-!-world!")
+(concat "-!-world!" "Hello ") -> (concat "Hello " "-!-world!")
 
-(- (+ -!-3 4) (+ 100 200)) ⟹ (- (+ 100 200) (+ -!-3 4))
+(- (+ -!-3 4) (+ 100 200)) -> (- (+ 100 200) (+ -!-3 4))
 
 ;;; Swapped expressions are properly indented
 (if some-condition
     (-!-message "It's false")
   (message "It's true"))
 
-;;; ⟹
+;;; ->
 
 (if some-condition
     (message "It's true")
@@ -331,7 +331,7 @@ Available to install via Melpa.
  :one 1
  :three 3}
 
-;;; ⟹
+;;; ->
 
 {:one 1
  :two-!- 2
@@ -342,7 +342,7 @@ Available to install via Melpa.
 ;;; should be-!- last
 ;;; should be first
 
-;;; ⟹
+;;; ->
 
 ;;; should be first
 ;;; should be-!- last
@@ -355,7 +355,7 @@ Available to install via Melpa.
   (message "It's true!")
   (message-!- "It's false!"))
 
-;;; ⟹
+;;; ->
 
 (when some-truth
   (message "It's true!"))
@@ -366,7 +366,7 @@ Available to install via Melpa.
       y -!-2
       g 3)
 
-;;; ⟹
+;;; ->
 
 (setf x 1
       g 3)
@@ -376,7 +376,7 @@ Available to install via Melpa.
 ;;; Some unnecessary -!-comment
 ;;; Needed comment
 
-;;; ⟹
+;;; ->
 
 ;;; Needed comment
 
@@ -388,7 +388,7 @@ Available to install via Melpa.
 (when t
   (message -!-"hello world"))
 
-;;; ⟹
+;;; ->
 
 (message -!-"hello world")
 
@@ -397,7 +397,7 @@ Available to install via Melpa.
 (when t
   (mess-!-age "hello world"))
 
-;;; ⟹
+;;; ->
 
 (when t
   mess-!-age)
@@ -408,7 +408,7 @@ Available to install via Melpa.
 
 -!-
 
-;;; ⟹
+;;; ->
 
 ;;; -!-
 
@@ -416,7 +416,7 @@ Available to install via Melpa.
 
 (message "hello -!-")
 
-;;; ⟹
+;;; ->
 
 (message "hello ;")
 
@@ -425,11 +425,11 @@ Available to install via Melpa.
    9. ~paxedit-wrap-comment~ - Wrap a comment macro around the current expression. If the current expression is already wrapped by a comment, then the wrapping comment is removed.
       #+BEGIN_SRC emacs-lisp
 ;;; Comment or uncomment the expression.
-(message -!-"hello world") ⟹ (comment (message -!-"hello world"))
+(message -!-"hello world") -> (comment (message -!-"hello world"))
 
 ;;; Executing the paxedit-wrap-comment function on a commented
 ;;; expression causes the comment to be removed.
-(comment (message -!-"hello world")) ⟹ (message -!-"hello world")
+(comment (message -!-"hello world")) -> (message -!-"hello world")
       #+END_SRC
 ** Symbolic Expression Refactoring
 1. ~paxedit-compress~ - Remove all the extraneous whitespace (e.g. newlines, tabs, spaces) to condense expression and contained sub-expressions onto one line.
@@ -439,21 +439,21 @@ Available to install via Melpa.
      100)
   x)
 
-;;; ⟹ paxedit-compress
+;;; -> paxedit-compress
 
 (if -!-(> x 10) (+ x 100) x)
    #+END_SRC
 2. ~paxedit-dissolve~ - Remove enclosing parenthesis, square brackets, curly brackets, or string quotes. In the case of strings, the user is prompted and asked if they would like to dissolve the enclosing quotes since doing so could unbalance the code through introduction of rogue parenthesis, brackets, and so on.
    #+BEGIN_SRC emacs-lisp
-(+ (1 -!-2 3)) ⟹ (+ 1 -!-2 3)
+(+ (1 -!-2 3)) -> (+ 1 -!-2 3)
 
-["one" -!-"two"] ⟹ "one" -!-"two"
+["one" -!-"two"] -> "one" -!-"two"
    #+END_SRC
 3. ~paxedit-format-1~ - Expression will be formatted to have one expression per line after the first two expression. Currently, this command does not preserve the cursor position.
    #+BEGIN_SRC emacs-lisp
 (+ 1 2 -!-3 4)
 
-;;; ⟹ paxedit-format-1
+;;; -> paxedit-format-1
 
 (+ -!-1
    2
@@ -463,23 +463,23 @@ Available to install via Melpa.
 ** Symbol Refactoring
    1. ~paxedit-symbol-change-case~ - Change the symbol to all uppercase if any of the symbol characters are lowercase, else lowercase the whole symbol.
       #+BEGIN_SRC emacs-lisp
-hell-!-o ⟹ HELL-!-O
+hell-!-o -> HELL-!-O
 
-HELL-!-O ⟹ hell-!-o
+HELL-!-O -> hell-!-o
       #+END_SRC
    2. ~paxedit-symbol-kill~ - Kill the symbol the text cursor is next to or in and cleans up the left-over whitespace from kill.
       #+BEGIN_SRC emacs-lisp
 ;;; Kill the current symbol and add it to kill ring and cleans up left
 ;;; over whitespace.
-(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
+(+ some-other-num some-nu-!-m) -> (+ some-other-num-!-)
 
-(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
+(+ some-other-num some-num-!-) -> (+ some-other-num-!-)
       #+END_SRC
    3. ~paxedit-symbol-delete~ - Delete the symbol the text cursor is next to or in and cleans up the left-over whitespace from delete.
       #+BEGIN_SRC emacs-lisp
-(+ some-other-num some-nu-!-m) ⟹ (+ some-other-num-!-)
+(+ some-other-num some-nu-!-m) -> (+ some-other-num-!-)
 
-(+ some-other-num some-num-!-) ⟹ (+ some-other-num-!-)
+(+ some-other-num some-num-!-) -> (+ some-other-num-!-)
       #+END_SRC
 ** Debugging
    1. ~paxedit-macro-expand-replace~ - Expand the current expression in its place if it is macro.
@@ -488,7 +488,7 @@ HELL-!-O ⟹ hell-!-o
 (awhen some-value-!-
        (message "It's true!"))
 
-;;; ⟹
+;;; ->
 
 (let ((it some-value))
   (if it (progn (message "It's true!")) nil))-!-
@@ -502,7 +502,7 @@ HELL-!-O ⟹ hell-!-o
 (+ 1
    -!-2)
 
-;;; ⟹
+;;; ->
 
 (+ 1-!-2)
        #+END_SRC
