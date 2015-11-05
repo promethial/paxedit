@@ -494,10 +494,18 @@ HELL-!-O -> hell-!-o
   (if it (progn (message "It's true!")) nil))-!-
       #+END_SRC
 ** Whitespace & Indentation
-   1. ~paxedit-cleanup~ - Indent the buffer according to the rules of the current mode.
-   2. ~paxedit-delete-whitespace~ - Delete all whitespace to the right and left of the cursor.
+   1. ~paxedit-cleanup~ - Indent buffer as defined by mode, remove tabs, and delete trialing whitespace.
+   2. ~paxedit-delete-whitespace~ - Delete all whitespace (e.g. space, tab, newlines) to the left and right of the cursor.
        #+BEGIN_SRC emacs-lisp
 ;;; Collapses the whitespace and newlines on both sides of the cursor
+
+This is  -!-    too much whitespace.
+
+;;; ->
+
+This is-!-too much whitespace.
+
+;;; Newlines and whitespace
 
 (+ 1
    -!-2)

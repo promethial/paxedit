@@ -6,7 +6,7 @@
 ;; Maintainer: Mustafa Shameem
 ;; URL: https://github.com/promethial/paxedit
 ;; Created: November 2, 2014
-;; Version: 1.1.5
+;; Version: 1.1.7
 ;; Keywords: lisp, refactoring, context
 ;; Package-Requires: ((cl-lib "0.5") (paredit "23"))
 
@@ -857,19 +857,41 @@ e.g. some-function-name, 123, 12_234."
 
 ;;;###autoload
 (defun paxedit-whitespace-delete-left ()
-  "Delete all the whitespace on the left side until a non-space character is encountered."
+  "Delete all whitespace left of the cursor, until a non-space character
+is encountered."
   (interactive)
   (paxedit-whitespace-clean))
 
 ;;;###autoload
 (defun paxedit-whitespace-delete-right ()
-  "Delete all the whitespace on the right side until a non-space character is encountered."
+  "Delete all whitespace right of the cursor, until a non-space character
+is encountered."
   (interactive)
   (paxedit-whitespace-clean t))
 
 ;;;###autoload
 (defun paxedit-delete-whitespace ()
-  "Delete all whitespace to the left and right of the cursor."
+  "Delete all whitespace (e.g. space, tab, newlines) to the left and
+right of the cursor.
+
+e.g.
+ ;;; Collapses the whitespace and newlines on both sides of the cursor
+ 
+ This is  -!-    too much whitespace.
+
+ ;;; ->
+
+ This is-!-too much whitespace.
+
+ ;;; Newlines and whitespace
+
+ (+ 1
+    -!-2)
+
+ ;;; ->
+
+ (+ 1-!-2)
+"
   (interactive)
   (paxedit-whitespace-clean t)
   (paxedit-whitespace-clean))
@@ -895,19 +917,30 @@ whitespace."
   (paxedit-untabify-buffer)
   (delete-trailing-whitespace))
 
+(defun paxedit-do-when-found (value func user-message)
+  ""
+  (paxedit-aif value
+      (funcall func value)
+    (message user-message)))
+
 ;;; Interactive Functions
 
 ;;; Symbol Navigation & Manipulation
 
 ;;;###autoload
 (defun paxedit-goto-start-of-symbol ()
-  "Go to the start of the current symbol."
+  "Move cursor to the start of the current symbol. 
+
+e.g.
+"
   (interactive)
-  (goto-char (cl-first (paxedit-symbol-current-boundary))))
+  (paxedit-do-when-found (cl-first (paxedit-symbol-current-boundary))
+                         'goto-char
+                         "No symbol found to move to the start of."))
 
 ;;;###autoload
 (defun paxedit-goto-end-of-symbol ()
-  "Go to the end of the current symbol."
+  "Move cursor to the end of the current symbol."
   (interactive)
   (goto-char (cl-rest (paxedit-symbol-current-boundary))))
 
@@ -915,9 +948,9 @@ whitespace."
 (defun paxedit-symbol-copy ()
   "Copy the symbol the cursor is on or next to."
   (interactive)
-  (paxedit-aif (paxedit-symbol-current-boundary)
-      (paxedit-region-copy it)
-    (message "No symbol found to copy")))
+  (paxedit-do-when-found (paxedit-symbol-current-boundary)
+                         'paxedit-region-copy
+                         "No symbol found to copy."))
 
 ;;;###autoload
 (defun paxedit-symbol-kill ()
@@ -932,7 +965,14 @@ left-over whitespace from kill."
 ;;;###autoload
 (defun paxedit-symbol-change-case ()
   "Change the symbol to all uppercase if any of the symbol characters are
-lowercase, else lowercase the whole symbol."
+lowercase, else lowercase the whole symbol.
+
+e.g.
+ artis-!-t -> ARTIS-!-T
+
+ CL-!-AVIER -> cl-!-avier
+
+ Tempe-!-red -> TEMPE-!-RED"
   (interactive)
   (paxedit-aif (paxedit-symbol-current-boundary)
       (funcall (if (let ((case-fold-search nil))
@@ -941,7 +981,7 @@ lowercase, else lowercase the whole symbol."
                  'downcase-region)
                (cl-first it)
                (cl-rest it))
-    (message "No symbol found to uppercase")))
+    (message "No symbol found to change case.")))
 
 ;;;###autoload
 (defun paxedit-symbol-occur ()
@@ -1112,11 +1152,11 @@ expression is already wrapped by a comment, then the wrapping comment
 is removed.
 
 Comment or uncomment the expression.
- (message -!-\"hello world\") ⟹  (comment  (message -!-\"hello world\"))
+ (message -!-\"hello world\") ->  (comment  (message -!-\"hello world\"))
 
 Executing the paxedit-wrap-comment function on a commented
 expression causes the comment to be removed.
- (comment  (message -!-\"hello world\")) ⟹  (message -!-\"hello world\")"
+ (comment  (message -!-\"hello world\")) ->  (message -!-\"hello world\")"
   (interactive)
   (paxedit-awhen (paxedit-sexp-core-region)
     (if (equal 'comment (paxedit-sexp-parent-function-symbol))
@@ -1450,7 +1490,7 @@ Typing semicolon into a lisp buffer results in inserting of a comment
 
 -!-
 
-⟹
+->
 
 ;;; -!-
 
@@ -1458,7 +1498,7 @@ Typing semicolon in a string results in insertion of semicolon.
 
 (message \"hello -!-\")
 
-⟹
+->
 
 (message \"hello ;\")
 
@@ -1502,7 +1542,7 @@ Typing semicolon in a string results in insertion of semicolon.
 or comment.
 
 Explicit expression
- (+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 -!-(+ 3 4))
+ (+ 1 2 (+ 3 -!-4)) -> (+ 1 2 -!-(+ 3 4))
 
 Implicit expression
 
@@ -1512,7 +1552,7 @@ Implicit structures, Clojure maps
   :two -!-2
   :three 3}
 
- ⟹
+ ->
 
     {:one 1
   -!-:two 2
@@ -1523,7 +1563,7 @@ comment
 
  ;;; While in some comment -!-editing
 
- ⟹
+ ->
 
  -!-;;; While in some comment editing
 "
@@ -1538,7 +1578,7 @@ comment
   "Move to the end of the explicit expression, implicit expression or comment.
 
 Explicit expression
- (+ 1 2 (+ 3 -!-4)) ⟹ (+ 1 2 (+ 3 4)-!-)
+ (+ 1 2 (+ 3 -!-4)) -> (+ 1 2 (+ 3 4)-!-)
 
 Implicit expression
 
@@ -1548,7 +1588,7 @@ Implicit structures, Clojure maps
   :two -!-2
   :three 3}
 
-⟹
+->
 
  {:one 1
   :two 2-!-
@@ -1558,7 +1598,7 @@ In the context of a comment, the cursor will jump to the start of the comment
 
 ;;; While in some comment -!-editing
 
-⟹
+->
 
 ;;; While in some comment editing-!-"
   (interactive "p")
@@ -1642,22 +1682,22 @@ shortcut for paxedit-transpose-forward to swap places with the next
 symbol or expression while preserving cursor and correctly
 reindenting.
 
- (+ tw-!-o one three) ⟹ (+ one tw-!-o three)
+ (+ tw-!-o one three) -> (+ one tw-!-o three)
 
- (+ 1-!-0 (+ 2 3)) ⟹ (+ (+ 2 3) 1-!-0)
+ (+ 1-!-0 (+ 2 3)) -> (+ (+ 2 3) 1-!-0)
 
 Swapping expressions, place the cursor anywhere not within a symbol
 and the containing expression can be swapped with the next expression.
- (concat \"-!-world!\" \"Hello \") ⟹ (concat \"Hello \" \"-!-world!\")
+ (concat \"-!-world!\" \"Hello \") -> (concat \"Hello \" \"-!-world!\")
 
- (- (+ -!-3 4) (+ 100 200)) ⟹ (- (+ 100 200) (+ -!-3 4))
+ (- (+ -!-3 4) (+ 100 200)) -> (- (+ 100 200) (+ -!-3 4))
 
 Swapped expressions are properly indented
  (if some-condition
      (-!-message \"It's false\")
    (message \"It's true\"))
 
- ;;; ⟹
+ ;;; ->
 
  (if some-condition
      (message \"It's true\")
@@ -1668,7 +1708,7 @@ Swapping expressions implicit structures e.g. Clojure maps
   :one 1
   :three 3}
 
- ;;; ⟹
+ ;;; ->
 
  {:one 1
   :two-!- 2
@@ -1679,7 +1719,7 @@ Swapping comments
  ;;; should be-!- last
  ;;; should be first
 
-⟹
+ ;;; ->
 
  ;;; should be first
  ;;; should be-!- last"
