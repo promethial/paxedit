@@ -1069,6 +1069,49 @@ e.g.
     (insert ?')))
 
 ;;;###autoload
+(defun paxedit-open-round ()
+  "Context specific open round. When the cursor is located within a
+symbol, the symbol is wrapped in open parentheses (see scenario 1). If the cursor
+is outside a symbol a pair of parentheses are inserted, and a
+space is inserted to seperate the newly created parentheses from
+any neighboring symbols (see scenario 2). If the cursor is located within a
+string a single, open parenthesis will be inserted without a matching close
+parenthesis (see scenario 3).
+
+Scenario 1. Located in symbol
+ (a b-!-a)
+
+ ->
+
+ (a (ba-!-))
+
+Scenario 2. Located outside symbol
+ (a -!-b c d)
+
+ ->
+
+ (a (-!-) b c d)
+
+Scenario 3. Located inside quotes
+ (a \"some -!-string\")
+
+ ->
+
+ (a \"some (-!-string\")
+
+Scenario 4. Region has mark set
+ (a b %c d%)
+
+ ->
+
+ (a b (c d)-!-)
+"
+  (interactive)
+  (paxedit-aif (paxedit-symbol-cursor-within?)
+      (paxedit--wrap-move-to-end "(" ")" it)
+    (paredit-open-round)))
+
+;;;###autoload
 (defun paxedit-close-sexp-newline ()
   "Close current round and newline. Faster version of the default paredit close round and newline procedure."
   (interactive)
