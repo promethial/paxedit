@@ -1081,11 +1081,11 @@ to the position before the start of LAST-STR."
 ;;;###autoload
 (defun paxedit-open-round ()
   "Context specific open round. When the cursor is located within a
-symbol, the symbol is wrapped in open parentheses (see scenario 1). If the cursor
-is outside a symbol a pair of parentheses are inserted, and a
-space is inserted to seperate the newly created parentheses from
-any neighboring symbols (see scenario 2). If the cursor is located within a
-string a single, open parenthesis will be inserted without a matching close
+symbol, the symbol is wrapped in parentheses (see scenario 1). If the cursor
+is outside of any symbol a pair of parentheses are inserted, and a space
+is inserted to seperate the newly created parentheses from any neighboring
+symbols (see scenario 2). If the cursor is located within a string a 
+single, open parenthesis will be inserted without a matching close
 parenthesis (see scenario 3).
 
 Scenario 1. Located in symbol
@@ -1122,41 +1122,41 @@ Scenario 4. Region has mark set
     (paredit-open-round)))
 
 (defun paxedit-open-bracket ()
-  "Context specific open round. When the cursor is located within a
-symbol, the symbol is wrapped in open parentheses (see scenario 1). If the cursor
-is outside a symbol a pair of parentheses are inserted, and a
-space is inserted to seperate the newly created parentheses from
-any neighboring symbols (see scenario 2). If the cursor is located within a
-string a single, open parenthesis will be inserted without a matching close
-parenthesis (see scenario 3).
+  "Context specific open bracket. When the cursor is located within a
+symbol, the symbol is wrapped in brackets (see scenario 1). If the cursor
+is outside of any symbol a pair of brackets are inserted, and a space
+is inserted to seperate the newly created brackets from any neighboring
+symbols (see scenario 2). If the cursor is located within a string a 
+single, open bracket will be inserted without a matching close
+bracket (see scenario 3).
 
 Scenario 1. Located in symbol
- (a b-!-a)
+ [a b-!-a]
 
  ->
 
- (a (ba-!-))
+ [a [ba-!-]]
 
 Scenario 2. Located outside symbol
- (a -!-b c d)
+ [a -!-b c d]
 
  ->
 
- (a (-!-) b c d)
+ [a [-!-] b c d]
 
 Scenario 3. Located inside quotes
- (a \"some -!-string\")
+ [a \"some -!-string\"]
 
  ->
 
- (a \"some (-!-string\")
+ [a \"some [-!-string\"]
 
 Scenario 4. Region has mark set
- (a b %c d%)
+ [a b %c d%]
 
  ->
 
- (a b (c d)-!-)
+ [a b [c d]-!-]
 "
   (interactive)
   (paxedit-aif (paxedit-symbol-cursor-within?)
