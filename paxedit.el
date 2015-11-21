@@ -1093,28 +1093,28 @@ Scenario 1. Located in symbol
 
  ->
 
- (a (ba-!-))
+ (a '(ba-!-))
 
 Scenario 2. Located outside symbol
  (a -!-b c d)
 
  ->
 
- (a (-!-) b c d)
+ (a '(-!-) b c d)
 
 Scenario 3. Located inside quotes
  (a \"some -!-string\")
 
  ->
 
- (a \"some (-!-string\")
+ (a \"some '(-!-string\")
 
 Scenario 4. Region has mark set
  (a b %c d%)
 
  ->
 
- (a b (c d)-!-)
+ (a b '(c d)-!-)
 "
   (interactive)
   (paxedit-aif (paxedit-symbol-cursor-within?)
