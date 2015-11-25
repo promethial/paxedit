@@ -27,6 +27,7 @@ Paxedit takes a departure from the above manual state of code editing through au
      - [[#context-refactoring][Context Refactoring]]
      - [[#symbolic-expression-refactoring][Symbolic Expression Refactoring]]
      - [[#symbol-refactoring][Symbol Refactoring]]
+     - [[#open-pair][Open Pair]]
      - [[#debugging][Debugging]]
      - [[#whitespace--indentation][Whitespace & Indentation]]
  - [[#other-notes--performance][Other Notes & Performance]]
@@ -383,7 +384,7 @@ Available to install via Melpa.
       #+END_SRC
    4. ~paxedit-kill~ - Kill current explicit expression, implicit expression, or comment. Also cleans up left-over whitespace from kill and corrects indentation.
    5. ~paxedit-copy~ - Copy current explicit expression, implicit expression, or comment.
-   8. ~paxedit-sexp-raise~ - Raises the expression the cursor is in while preserving the cursor location.
+   6. ~paxedit-sexp-raise~ - Raises the expression the cursor is in while preserving the cursor location.
       #+BEGIN_SRC emacs-lisp
 (when t
   (message -!-"hello world"))
@@ -402,7 +403,7 @@ Available to install via Melpa.
 (when t
   mess-!-age)
 #+END_SRC
-   8. ~paxedit-insert-semicolon~ - Insert comment or semicolon depending on the location (or context) of the cursor. If the cursor is in a string, comment, or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute ~paredit-comment-dwim~ to insert comment.
+   7. ~paxedit-insert-semicolon~ - Insert comment or semicolon depending on the location (or context) of the cursor. If the cursor is in a string, comment, or creating a character (?; in elisp or Clojure's ';') insert semicolon else execute ~paredit-comment-dwim~ to insert comment.
       #+BEGIN_SRC emacs-lisp
 ;;; Typing semicolon into a lisp buffer
 
@@ -431,6 +432,7 @@ Available to install via Melpa.
 ;;; expression causes the comment to be removed.
 (comment (message -!-"hello world")) -> (message -!-"hello world")
       #+END_SRC
+   8. ~paxedit-backward-kill~ -
 ** Symbolic Expression Refactoring
 1. ~paxedit-compress~ - Remove all the extraneous whitespace (e.g. newlines, tabs, spaces) to condense expression and contained sub-expressions onto one line.
    #+BEGIN_SRC emacs-lisp
@@ -481,6 +483,128 @@ HELL-!-O -> hell-!-o
 
 (+ some-other-num some-num-!-) -> (+ some-other-num-!-)
       #+END_SRC
+** Open Pair
+1. ~paxedit-open-round~ - Context specific open round. When the cursor is located within a symbol, the symbol is wrapped in parentheses (see scenario 1). If the cursor is outside of any symbol a pair of parentheses are inserted, and a space is inserted to seperate the newly created parentheses from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, open parenthesis will be inserted without a matching close parenthesis (see scenario 3).
+#+BEGIN_SRC emacs-lisp
+;;; Scenario 1. Located in symbol
+ (a b-!-a)
+
+ ->
+
+ (a (ba-!-))
+
+;;; Scenario 2. Located outside symbol
+ (a -!-b c d)
+
+ ->
+
+ (a (-!-) b c d)
+
+;;; Scenario 3. Located inside quotes
+ (a \"some -!-string\")
+
+ ->
+
+ (a \"some (-!-string\")
+
+;;; Scenario 4. Region has mark set
+ (a b %c d%)
+
+ ->
+
+ (a b (c d)-!-)
+#+END_SRC
+2. ~paxedit-open-quoted-round~ - Context specific single-quoted, open round. When the cursor is located within a symbol, the symbol is wrapped in single-quoted parentheses (see scenario 1). If the cursor is outside of any symbol a pair of single-quoted parentheses are inserted, and a space is inserted to seperate the newly created single-quoted parentheses from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, single-quoted, open parenthesis will be inserted without a matching close parenthesis (see scenario 3).
+#+BEGIN_SRC emacs-lisp
+;;; Scenario 1. Located in symbol
+ (a b-!-a)
+
+ ->
+
+ (a '(ba-!-))
+
+;;; Scenario 2. Located outside symbol
+ (a -!-b c d)
+
+ ->
+
+ (a '(-!-) b c d)
+
+;;; Scenario 3. Located inside quotes
+ (a \"some -!-string\")
+
+ ->
+
+ (a \"some '(-!-string\")
+
+;;; Scenario 4. Region has mark set
+ (a b %c d%)
+
+ ->
+
+ (a b '(c d)-!-)
+#+END_SRC
+3. ~paxedit-open-bracket~ - Context specific open bracket. When the cursor is located within a symbol, the symbol is wrapped in brackets (see scenario 1). If the cursor is outside of any symbol a pair of brackets are inserted, and a space is inserted to seperate the newly created brackets from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, open bracket will be inserted without a matching close bracket (see scenario 3).
+#+BEGIN_SRC emacs-lisp
+;;; Scenario 1. Located in symbol
+ [a b-!-a]
+
+ ->
+
+ [a [ba-!-]]
+
+;;; Scenario 2. Located outside symbol
+ [a -!-b c d]
+
+ ->
+
+ [a [-!-] b c d]
+
+;;; Scenario 3. Located inside quotes
+ [a \"some -!-string\"]
+
+ ->
+
+ [a \"some [-!-string\"]
+
+;;; Scenario 4. Region has mark set
+ [a b %c d%]
+
+ ->
+
+ [a b [c d]-!-]
+#+END_SRC
+
+4. ~paxedit-open-curly-bracket~ - Context specific open curly bracket. When the cursor is located within a symbol, the symbol is wrapped in curly brackets (see scenario 1). If the cursor is outside of any symbol a pair of curly brackets are inserted, and a space is inserted to seperate the newly created curly brackets from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, open curly bracket will be inserted without a matching close curly bracket (see scenario 3).
+#+BEGIN_SRC emacs-lisp
+;;; Scenario 1. Located in symbol
+ {a b-!-a}
+
+ ->
+
+ {a {ba-!-}}
+
+;;; Scenario 2. Located outside symbol
+ {a -!-b c d}
+
+ ->
+
+ {a {-!-} b c d}
+
+;;; Scenario 3. Located inside quotes
+ {a \"some -!-string\"}
+
+ ->
+
+ {a \"some {-!-string\"}
+
+;;; Scenario 4. Region has mark set
+ {a b %c d%}
+
+ ->
+
+ {a b {c d}-!-}
+#+END_SRC
 ** Debugging
    1. ~paxedit-macro-expand-replace~ - Expand the current expression in its place if it is macro.
       #+BEGIN_SRC emacs-lisp
