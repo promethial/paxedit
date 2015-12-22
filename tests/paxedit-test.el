@@ -417,7 +417,7 @@ when t '-!-(+ 1 2))" "(
 
 (xt-deftest paxedit-wrap-comment
   (xtd-setup= (lambda (_) (let ((paxedit-alignment-cleanup nil))
-                       (paxedit-wrap-comment)))
+                            (paxedit-wrap-comment)))
               ("(message-!- \"hello\")" "(comment (message-!- \"hello\"))")
               ("(message
 \"hello\"-!-)" "(comment (message
@@ -451,8 +451,8 @@ when t '-!-(+ 1 2))" "(
 
 (xt-deftest paxedit-custom-implicit-function
   (xtd-setup= (lambda (_) (eval-after-load "paxedit"
-                       '(progn (add-to-list 'paxedit-implicit-functions-elisp '(pax-some-function . (1 2)))
-                               (add-to-list 'paxedit-implicit-functions-elisp '(pax-some-function2 . (2 3)))))
+                            '(progn (add-to-list 'paxedit-implicit-functions-elisp '(pax-some-function . (1 2)))
+                                    (add-to-list 'paxedit-implicit-functions-elisp '(pax-some-function2 . (2 3)))))
                 (paxedit-test-elisp-setup)
                 (paxedit-kill))
               ("(pax-some-function :one -!-1 :two 2)"
@@ -494,3 +494,23 @@ when t '-!-(+ 1 2))" "(
                 (paxedit-format-1))
               ("(-!-)" "()-!-")
               ("(1 2 -!-3)" "(1 -!-2\n   3)")))
+
+(xt-deftest paxedit-symbol-backward-kill
+  (xtd-setup= (lambda (_) (paxedit-symbol-backward-kill 1))
+              ("(hark-!-)" "(-!-)")
+              ("(in their hill-side -!-blue)" "(in their -!-blue)")
+              ("(in their hill-side-!- blue)" "(in their -!- blue)")
+              ("(in their hill-side bl-!-ue)" "(in their hill-side -!-ue)")
+              ("(in their hill-side blue)    -!-" "(in their hill-side blue)-!-"))
+  ;; Testing universal argument
+  (xtd-setup= (lambda (_) (paxedit-symbol-backward-kill 2))
+              ("(hark ark-!-)" "(-!-)"))
+  ;; Testing conditions where symbol cannot be killed
+  (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (error (concat "message:: " output)))))
+                        (condition-case ex
+                            (call-interactively 'paxedit-symbol-backward-kill)
+                          (error (cadr ex)))))
+               ("-!-" "message:: No symbol found to kill.")
+               ("-!-art" "message:: No symbol found to kill.")
+               ("(+ 1 2)-!-" "message:: No symbol found to kill.")
+               ("(-!-+ 1 2)" "message:: No symbol found to kill.")))

@@ -717,10 +717,39 @@ e.g. some-function-name, 123, 12_234."
     (goto-char (paxedit-funcif forwardp 'cl-rest 'cl-first it))))
 
 (defun paxedit-symbol-cursor-within? ()
-  "Return true if the cursors is within the symbol, and not at the left or right boundary of the symbol."
+  "Return true if the cursors is within the symbol, and not at the left
+or right boundary of the symbol."
   (paxedit-awhen (paxedit-symbol-current-boundary)
     (when (paxedit-region-contains-point-exclude-boundary it (point))
       it)))
+
+(defun paxedit-symbol-forward-kill (&optional n)
+  "Kill back"
+  (interactive "p")
+  (dotimes (_ n)
+    (paxedit-whitespace-delete-right)
+    (paxedit-aif (paxedit-symbol-cursor-within?)
+        (progn (paxedit-region-kill (cons (point)
+                                          (cl-rest it))))
+      (paxedit-aif (paxedit-symbol-current-boundary)
+          (if (not (= (point) (cl-rest it)))
+              (paxedit-region-kill it)
+            (message "No symbol found to kill."))
+        (message "No symbol found to kill.")))))
+
+(defun paxedit-symbol-backward-kill (&optional n)
+  "Kill back"
+  (interactive "p")
+  (dotimes (_ n)
+    (paxedit-whitespace-delete-left)
+    (paxedit-aif (paxedit-symbol-cursor-within?)
+        (progn (paxedit-region-kill (cons (cl-first it)
+                                          (point))))
+      (paxedit-aif (paxedit-symbol-current-boundary)
+          (if (not (= (point) (cl-first it)))
+              (paxedit-region-kill it)
+            (message "No symbol found to kill."))
+        (message "No symbol found to kill.")))))
 
 ;;; Comment Functions
 
