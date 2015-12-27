@@ -514,3 +514,23 @@ when t '-!-(+ 1 2))" "(
                ("-!-art" "message:: No symbol found to kill.")
                ("(+ 1 2)-!-" "message:: No symbol found to kill.")
                ("(-!-+ 1 2)" "message:: No symbol found to kill.")))
+
+(xt-deftest paxedit-symbol-forward-kill
+  (xtd-setup= (lambda (_) (paxedit-symbol-forward-kill 1))
+              ("(-!-hark)" "(-!-)")
+              ("(in their hill-side -!-blue)" "(in their hill-side -!-)")
+              ("(in their hill-side-!- blue)" "(in their hill-side-!-)")
+              ("(in their hill-side bl-!-ue)" "(in their hill-side bl-!-)")
+              ("(in their hill-side blue)-!-    " "(in their hill-side blue)-!-"))
+  ;; Testing universal argument
+  (xtd-setup= (lambda (_) (paxedit-symbol-forward-kill 2))
+              ("(hark -!-ark tark)" "(hark -!-)"))
+  ;; Testing conditions where symbol cannot be killed
+  (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (error (concat "message:: " output)))))
+                        (condition-case ex
+                            (call-interactively 'paxedit-symbol-forward-kill)
+                          (error (cadr ex)))))
+               ("-!-" "message:: No symbol found to kill.")
+               ("art-!-" "message:: No symbol found to kill.")
+               ("(+ 1 2)-!-" "message:: No symbol found to kill.")
+               ("(+ 1 2-!-)" "message:: No symbol found to kill.")))
