@@ -495,42 +495,54 @@ when t '-!-(+ 1 2))" "(
               ("(-!-)" "()-!-")
               ("(1 2 -!-3)" "(1 -!-2\n   3)")))
 
-(xt-deftest paxedit-symbol-backward-kill
-  (xtd-setup= (lambda (_) (paxedit-symbol-backward-kill 1))
+(xt-deftest paxedit-backward-kill
+  (xtd-setup= (lambda (_) (paxedit-backward-kill 1))
               ("(hark-!-)" "(-!-)")
               ("(in their hill-side -!-blue)" "(in their -!-blue)")
               ("(in their hill-side-!- blue)" "(in their -!- blue)")
               ("(in their hill-side bl-!-ue)" "(in their hill-side -!-ue)")
-              ("(in their hill-side blue)    -!-" "(in their hill-side blue)-!-"))
+              ("(in their hill-side blue)    -!-" "(in their hill-side blue)-!-")
+              ;; Context sensitive comment kill
+              (";;; Circumambulate-!- the city of a dreamy Sabbath afternoon." ";;; -!- the city of a dreamy Sabbath afternoon."))
   ;; Testing universal argument
-  (xtd-setup= (lambda (_) (paxedit-symbol-backward-kill 2))
-              ("(hark ark-!-)" "(-!-)"))
+  (xtd-setup= (lambda (_) (paxedit-backward-kill 2))
+              ("(hark ark-!-)" "(-!-)")
+              (";;; Circumambulate-!- the city of a dreamy Sabbath afternoon." ";;;-!- the city of a dreamy Sabbath afternoon."))
   ;; Testing conditions where symbol cannot be killed
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (error (concat "message:: " output)))))
                         (condition-case ex
-                            (call-interactively 'paxedit-symbol-backward-kill)
+                            (call-interactively 'paxedit-backward-kill)
                           (error (cadr ex)))))
                ("-!-" "message:: No symbol found to kill.")
                ("-!-art" "message:: No symbol found to kill.")
                ("(+ 1 2)-!-" "message:: No symbol found to kill.")
-               ("(-!-+ 1 2)" "message:: No symbol found to kill.")))
+               ("(-!-+ 1 2)" "message:: No symbol found to kill.")
+               ;; Context sensitive comment kill
+               (";;;-!-" "message:: No symbol found to kill.")
+               (";;-!-" "message:: No symbol found to kill.")))
 
-(xt-deftest paxedit-symbol-forward-kill
-  (xtd-setup= (lambda (_) (paxedit-symbol-forward-kill 1))
+(xt-deftest paxedit-forward-kill
+  (xtd-setup= (lambda (_) (paxedit-forward-kill 1))
               ("(-!-hark)" "(-!-)")
               ("(in their hill-side -!-blue)" "(in their hill-side -!-)")
               ("(in their hill-side-!- blue)" "(in their hill-side-!-)")
               ("(in their hill-side bl-!-ue)" "(in their hill-side bl-!-)")
-              ("(in their hill-side blue)-!-    " "(in their hill-side blue)-!-"))
+              ("(in their hill-side blue)-!-    " "(in their hill-side blue)-!-")
+              ;; Context sensitive comment kill
+              (";;; in their hill-side -!-blue" ";;; in their hill-side -!-"))
   ;; Testing universal argument
-  (xtd-setup= (lambda (_) (paxedit-symbol-forward-kill 2))
-              ("(hark -!-ark tark)" "(hark -!-)"))
+  (xtd-setup= (lambda (_) (paxedit-forward-kill 2))
+              ("(hark -!-ark tark)" "(hark -!-)")
+              (";;; -!-quick test" ";;; -!-")
+              (";;; -!-test\n(+ 1 2 3)" ";;; -!-\n(+ 1 2 3)"))
   ;; Testing conditions where symbol cannot be killed
   (xtd-return= (lambda (_) (cl-letf (((symbol-function 'message) (lambda (output) (error (concat "message:: " output)))))
                         (condition-case ex
-                            (call-interactively 'paxedit-symbol-forward-kill)
+                            (call-interactively 'paxedit-forward-kill)
                           (error (cadr ex)))))
                ("-!-" "message:: No symbol found to kill.")
                ("art-!-" "message:: No symbol found to kill.")
                ("(+ 1 2)-!-" "message:: No symbol found to kill.")
-               ("(+ 1 2-!-)" "message:: No symbol found to kill.")))
+               ("(+ 1 2-!-)" "message:: No symbol found to kill.")
+               ;; Context sensitive comment kill
+               (";;; Circumambulate the city of a dreamy Sabbath afternoon.-!-" "message:: No symbol found to kill.")))

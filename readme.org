@@ -11,7 +11,7 @@ Paxedit takes a departure from the above manual state of code editing through au
 #+END_ABSTRACT
 #+LATEX: \tableofcontents
 #+TOC: nil
-* Table of Contents                                                     :toc:
+* Table of Contents :toc:
  - [[#demo][Demo]]
  - [[#introduction][Introduction]]
      - [[#what-is-paxedit][What is Paxedit?]]
@@ -23,8 +23,8 @@ Paxedit takes a departure from the above manual state of code editing through au
      - [[#setup][Setup]]
      - [[#customization][Customization]]
  - [[#functionality][Functionality]]
-     - [[#context-navigation][Context Navigation]]
-     - [[#context-refactoring][Context Refactoring]]
+     - [[#context-sensitive-navigation][Context Sensitive Navigation]]
+     - [[#context-sensitive-refactoring][Context Sensitive Refactoring]]
      - [[#symbolic-expression-refactoring][Symbolic Expression Refactoring]]
      - [[#symbol-refactoring][Symbol Refactoring]]
      - [[#open-pair][Open Pair]]
@@ -172,6 +172,10 @@ Available to install via Melpa.
           (define-key paxedit-mode-map (kbd "C-&") 'paxedit-kill)
           (define-key paxedit-mode-map (kbd "C-*") 'paxedit-delete)
           (define-key paxedit-mode-map (kbd "C-^") 'paxedit-sexp-raise)
+          ;; Symbol backward/forward kill
+          (define-key paxedit-mode-map (kbd "C-w") 'paxedit-backward-kill)
+          (define-key paxedit-mode-map (kbd "M-w") 'paxedit-forward-kill)
+          ;; Symbol manipulation
           (define-key paxedit-mode-map (kbd "M-u") 'paxedit-symbol-change-case)
           (define-key paxedit-mode-map (kbd "C-@") 'paxedit-symbol-copy)
           (define-key paxedit-mode-map (kbd "C-#") 'paxedit-symbol-kill)))
@@ -243,7 +247,7 @@ Available to install via Melpa.
 ;;; using the format for paxedit-implicit-functions-elisp
    #+END_SRC
 * Functionality
-** Context Navigation
+** Context Sensitive Navigation
    1. ~paxedit-backward-up~ - Move to the start of the explicit expression, implicit expression or comment.
       #+BEGIN_SRC emacs-lisp
 ;;; Explicit expression
@@ -298,7 +302,7 @@ Available to install via Melpa.
 
 (message "hello world")       ; While in some comment editing-!-
       #+END_SRC
-** Context Refactoring
+** Context Sensitive Refactoring
    1. ~paxedit-transpose-forward~ - Swap the current explicit expression, implicit expression, symbol, or comment forward depending on what the cursor is on and what is available to swap with. This command is very versatile and will do the "right" thing in each context. See below for the different uses.
       #+BEGIN_SRC emacs-lisp
 ;;; Swapping symbols, place the cursor within the symbol and run the
@@ -432,7 +436,6 @@ Available to install via Melpa.
 ;;; expression causes the comment to be removed.
 (comment (message -!-"hello world")) -> (message -!-"hello world")
       #+END_SRC
-   8. ~paxedit-backward-kill~ -
 ** Symbolic Expression Refactoring
 1. ~paxedit-compress~ - Remove all the extraneous whitespace (e.g. newlines, tabs, spaces) to condense expression and contained sub-expressions onto one line.
    #+BEGIN_SRC emacs-lisp
@@ -483,9 +486,52 @@ HELL-!-O -> hell-!-o
 
 (+ some-other-num some-num-!-) -> (+ some-other-num-!-)
       #+END_SRC
+   4. ~paxedit-backward-kill~ - Kill symbol before the cursor—if it exists—deleting any whitespace in between the cursor and the symbol, while keeping the containing expression balanced. The universal argument can be used to repeat the command N number of times. This context specific command takes a conservative approach by preventing unbalancing of comments or expressions. ~paxedit-backward-kill~ will not kill beyond the containing expression.  Additionally, when the cursor is inside a comment, the kill command will kill no further than the start or end of the comment to prevent accidental commenting of other expressions or un-commenting.
+      #+BEGIN_SRC emacs-lisp
+hello -!-world -> -!-world
+
+(+ x1-!- y1 g1) -> (+ -!- y1 g1)
+
+(concat one-vari-!-able two) -> (concat -!-able two)
+
+;;; Backward kill will not kill symbols beyond the expression or
+;;; comment that currently contains the cursor. Note how the next
+;;; examples do nothing but emit a message there is no symbol found
+;;; to kill.
+
+(-!-concat one-variable two) -> (-!-concat one-variable two)
+
+;;;-!- hello world -> ;;;-!- hello world
+
+;;; Using the universal argument, C-U 2, to kill two symbols
+
+(+ x1 y1 -!-g1) -> (+ -!-g1)
+      #+END_SRC
+   5. ~paxedit-forward-kill~ - Kill symbol after the cursor—if it exists—deleting any whitespace in between the cursor and the symbol, while keeping the containingexpression balanced. The universal argument can be used to repeat the command N number of times. This context specific command takes a conservative approach by preventing unbalancing of comments or expressions.  ~paxedit-forward-kill~ will not kill beyond the containing expression. Additionally, when the cursor is inside a comment, the kill command will kill no further than the start or end of the comment to prevent accidental commenting of other expressions or un-commenting. 
+
+      #+BEGIN_SRC emacs-lisp
+hello -!-world -> hello -!-
+
+(+ x1-!- y1 g1) -> (+ x1 -!- g1)
+
+(concat one-vari-!-able two) -> (concat one-vari-!- two)
+
+;;; Forward kill will not kill symbols beyond the expression or
+;;; comment that currently contains the cursor. Note how the next
+;;; examples do nothing but emit a message there is no symbol found
+;;; to kill.
+
+(concat one-variable two-!-) -> (concat one-variable two-!-)
+
+;;; hello world-!- -> ;;; hello world-!-
+
+;;; Using the universal argument, C-U 2, to kill two symbols
+
+(+ x1-!- y1 g1) -> (+ x1-!-)"
+      #+END_SRC
 ** Open Pair
 1. ~paxedit-open-round~ - Context specific open round. When the cursor is located within a symbol, the symbol is wrapped in parentheses (see scenario 1). If the cursor is outside of any symbol a pair of parentheses are inserted, and a space is inserted to seperate the newly created parentheses from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, open parenthesis will be inserted without a matching close parenthesis (see scenario 3).
-#+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp
 ;;; Scenario 1. Located in symbol
  (a b-!-a)
 
@@ -513,9 +559,9 @@ HELL-!-O -> hell-!-o
  ->
 
  (a b (c d)-!-)
-#+END_SRC
+   #+END_SRC
 2. ~paxedit-open-quoted-round~ - Context specific single-quoted, open round. When the cursor is located within a symbol, the symbol is wrapped in single-quoted parentheses (see scenario 1). If the cursor is outside of any symbol a pair of single-quoted parentheses are inserted, and a space is inserted to seperate the newly created single-quoted parentheses from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, single-quoted, open parenthesis will be inserted without a matching close parenthesis (see scenario 3).
-#+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp
 ;;; Scenario 1. Located in symbol
  (a b-!-a)
 
@@ -543,9 +589,9 @@ HELL-!-O -> hell-!-o
  ->
 
  (a b '(c d)-!-)
-#+END_SRC
+   #+END_SRC
 3. ~paxedit-open-bracket~ - Context specific open bracket. When the cursor is located within a symbol, the symbol is wrapped in brackets (see scenario 1). If the cursor is outside of any symbol a pair of brackets are inserted, and a space is inserted to seperate the newly created brackets from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, open bracket will be inserted without a matching close bracket (see scenario 3).
-#+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp
 ;;; Scenario 1. Located in symbol
  [a b-!-a]
 
@@ -573,10 +619,9 @@ HELL-!-O -> hell-!-o
  ->
 
  [a b [c d]-!-]
-#+END_SRC
-
+   #+END_SRC
 4. ~paxedit-open-curly-bracket~ - Context specific open curly bracket. When the cursor is located within a symbol, the symbol is wrapped in curly brackets (see scenario 1). If the cursor is outside of any symbol a pair of curly brackets are inserted, and a space is inserted to seperate the newly created curly brackets from any neighboring symbols (see scenario 2). If the cursor is located within a string a single, open curly bracket will be inserted without a matching close curly bracket (see scenario 3).
-#+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp
 ;;; Scenario 1. Located in symbol
  {a b-!-a}
 
@@ -604,7 +649,7 @@ HELL-!-O -> hell-!-o
  ->
 
  {a b {c d}-!-}
-#+END_SRC
+   #+END_SRC
 ** Debugging
    1. ~paxedit-macro-expand-replace~ - Expand the current expression in its place if it is macro.
       #+BEGIN_SRC emacs-lisp

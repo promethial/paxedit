@@ -116,6 +116,11 @@
   :group 'paxedit
   :type 'string)
 
+(defcustom paxedit-message-symbol-not-found "No symbol found to kill."
+  "Message emitted when no symbol found to kill."
+  :group 'paxedit
+  :type 'string)
+
 ;;; Internal Options
 
 (defvar paxedit-sexp-implicit-functions nil
@@ -455,6 +460,16 @@ we hold These Truths
     (save-excursion (goto-char rstart)
                     (insert (funcall func it)))))
 
+(defun paxedit-region-buffer ()
+  "Return a REGION reflecting the min and max points of the current
+buffer."
+  (cons (point-min)
+        (point-max)))
+
+(defun-paxedit-region paxedit-region-narrow ()
+  "Narrow buffer to REGION."
+  (narrow-to-region rstart rend))
+
 (defun paxedit-preserve-place ()
   "Insert a unique string to preserve the current cursor position."
   (insert paxedit-cursor-preserve-random))
@@ -723,33 +738,104 @@ or right boundary of the symbol."
     (when (paxedit-region-contains-point-exclude-boundary it (point))
       it)))
 
-(defun paxedit-symbol-forward-kill (&optional n)
-  "Kill back"
-  (interactive "p")
-  (dotimes (_ n)
-    (paxedit-whitespace-delete-right)
-    (paxedit-aif (paxedit-symbol-cursor-within?)
-        (progn (paxedit-region-kill (cons (point)
-                                          (cl-rest it))))
-      (paxedit-aif (paxedit-symbol-current-boundary)
-          (if (not (= (point) (cl-rest it)))
-              (paxedit-region-kill it)
-            (message "No symbol found to kill."))
-        (message "No symbol found to kill.")))))
+(defun paxedit-direction-kill (forward n)
+  "General, context-specific implementation of symbol killing in the
+forward and backward direction."
+  (let ((region-choice (if forward 'cl-rest 'cl-first))
+        (clean-choice (if forward
+                          'paxedit-whitespace-delete-right
+                        'paxedit-whitespace-delete-left)))
+    (paxedit-awhen (or (paxedit-comment-internal-region (paxedit-comment-region-cursor))
+                       (paxedit-sexp-core-region)
+                       (paxedit-region-buffer))
+      (save-restriction
+        (paxedit-region-narrow it)
+        (dotimes (_ n)
+          (funcall clean-choice)
+          (paxedit-aif (paxedit-symbol-cursor-within?)
+              (paxedit-region-kill (cons (point)
+                                         (funcall region-choice it)))
+            (paxedit-aif (paxedit-symbol-current-boundary)
+                (if (/= (point) (funcall region-choice it))
+                    (paxedit-region-kill it)
+                  (message paxedit-message-symbol-not-found))
+              (message paxedit-message-symbol-not-found))))))))
 
-(defun paxedit-symbol-backward-kill (&optional n)
-  "Kill back"
+(defun paxedit-backward-kill (&optional n)
+  "Kill symbol before the cursor—-if it exists—-deleting any whitespace in
+between the cursor and the symbol, while keeping the containing
+expression balanced. The universal argument can be used to repeat the
+command N number of times.
+
+This context specific command takes a conservative approach by
+preventing unbalancing of comments or expressions.
+
+`paxedit-backward-kill will not kill beyond the containing
+expression.  Additionally, when the cursor is inside a comment, the
+kill command will kill no further than the start or end of the comment
+to prevent accidental commenting of other expressions or
+un-commenting.
+
+e.g.
+
+ hello -!-world -> -!-world
+
+ (+ x1-!- y1 g1) -> (+ -!- y1 g1)
+ 
+ (concat one-vari-!-able two) -> (concat -!-able two)
+
+ ;;; Backward kill will not kill symbols beyond the expression or
+ ;;; comment that currently contains the cursor. Note how the next
+ ;;; examples do nothing but emit a message there is no symbol found
+ ;;; to kill.
+
+ (-!-concat one-variable two) -> (-!-concat one-variable two)
+
+ ;;;-!- hello world -> ;;;-!- hello world
+
+ ;;; Using the universal argument, C-U 2, to kill two symbols
+
+ (+ x1 y1 -!-g1) -> (+ -!-g1)"
   (interactive "p")
-  (dotimes (_ n)
-    (paxedit-whitespace-delete-left)
-    (paxedit-aif (paxedit-symbol-cursor-within?)
-        (progn (paxedit-region-kill (cons (cl-first it)
-                                          (point))))
-      (paxedit-aif (paxedit-symbol-current-boundary)
-          (if (not (= (point) (cl-first it)))
-              (paxedit-region-kill it)
-            (message "No symbol found to kill."))
-        (message "No symbol found to kill.")))))
+  (paxedit-direction-kill nil n))
+
+(defun paxedit-forward-kill (&optional n)
+  "Kill symbol after the cursor—-if it exists—-deleting any whitespace in
+between the cursor and the symbol, while keeping the containing
+expression balanced. The universal argument can be used to repeat the
+command N number of times.
+
+This context specific command takes a conservative approach by
+preventing unbalancing of comments or expressions.
+
+`paxedit-forward-kill will not kill beyond the containing
+expression.  Additionally, when the cursor is inside a comment, the
+kill command will kill no further than the start or end of the comment
+to prevent accidental commenting of other expressions or
+un-commenting.
+
+e.g.
+
+ hello -!-world -> hello -!-
+
+ (+ x1-!- y1 g1) -> (+ x1 -!- g1)
+ 
+ (concat one-vari-!-able two) -> (concat one-vari-!- two)
+
+ ;;; Forward kill will not kill symbols beyond the expression or
+ ;;; comment that currently contains the cursor. Note how the next
+ ;;; examples do nothing but emit a message there is no symbol found
+ ;;; to kill.
+
+ (concat one-variable two-!-) -> (concat one-variable two-!-)
+
+ ;;; hello world-!- -> ;;; hello world-!-
+
+ ;;; Using the universal argument, C-U 2, to kill two symbols
+
+ (+ x1-!- y1 g1) -> (+ x1-!-)"
+  (interactive "p")
+  (paxedit-direction-kill t n))
 
 ;;; Comment Functions
 
@@ -861,6 +947,14 @@ or right boundary of the symbol."
 
 ;;; Cleanup Functions
 ;;; SEXP Deletion Cleanup
+
+(defun paxedit--whitespace-skip (&optional clean-to-right?)
+  "Skip whitespace characters—-if they exist--until a non-whitespace
+character or end of buffer is reached."
+  (paxedit-funcif clean-to-right?
+                  'skip-chars-forward
+                  'skip-chars-backward
+                  (concat paxedit-general-whitespace)))
 
 (defun paxedit-whitespace-clean (&optional clean-to-right?)
   "Clean whitespace to the right or left."
