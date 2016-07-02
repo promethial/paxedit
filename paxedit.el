@@ -57,6 +57,8 @@
   :group 'paxedit
   :type '(repeat character))
 
+;;; Emacs Lisp implicit functions/structure support
+
 (defcustom paxedit-implicit-functions-elisp '((setq . (1 2))
                                               (setf . (1 2))
                                               (setq-default . (1 2))
@@ -68,6 +70,22 @@
   "Implicit functions in ELISP."
   :group 'paxedit
   :type '(alist :key-type symbol :value-type (list integer integer)))
+
+;;; Common Lisp implicit functions/structure support
+
+(defcustom paxedit-implicit-functions-common-lisp '((setq . (1 2))
+                                                    (setf . (1 2))
+                                                    (psetq . (1 2))
+                                                    (psetf . (1 2))
+                                                    ;; TODO Needs to be expanded to include
+                                                    ;; the full set of implicit functions
+                                                    ;; in the Common Lisp standard
+                                                    )
+  "Implicit functions in Common Lisp."
+  :group 'paxedit
+  :type '(alist :key-type symbol :value-type (list integer integer)))
+
+;;; Clojure implicit functions/structure support
 
 (defcustom paxedit-implicit-functions-clojure '((cond . (1 2)))
   "Implicit functions in Clojure."
@@ -143,7 +161,13 @@
                         (clojure-mode . (paxedit-implicit-functions-clojure
                                          paxedit-implicit-structures-clojure
                                          ;; Mode specific function implementation
-                                         ((paxedit-insert-semicolon . paxedit-insert-semicolon-clojure)))))
+                                         ((paxedit-insert-semicolon . paxedit-insert-semicolon-clojure))))
+                        (lisp-interaction-mode . (paxedit-implicit-functions-common-lisp
+                                                  ;; TODO Common Lisp does not have
+                                                  ;; any implicit structures
+                                                  nil
+                                                  ;; Mode specific function implementation
+                                                  ((paxedit-insert-semicolon . paxedit-insert-semicolon-common-lisp)))))
   "Associate major mode with implicit functions and structure.")
 
 ;;; Paxedit Defaults
@@ -781,7 +805,7 @@ e.g.
  hello -!-world -> -!-world
 
  (+ x1-!- y1 g1) -> (+ -!- y1 g1)
- 
+
  (concat one-vari-!-able two) -> (concat -!-able two)
 
  ;;; Backward kill will not kill symbols beyond the expression or
@@ -819,7 +843,7 @@ e.g.
  hello -!-world -> hello -!-
 
  (+ x1-!- y1 g1) -> (+ x1 -!- g1)
- 
+
  (concat one-vari-!-able two) -> (concat one-vari-!- two)
 
  ;;; Forward kill will not kill symbols beyond the expression or
@@ -999,7 +1023,7 @@ right of the cursor.
 
 e.g.
  ;;; Collapses the whitespace and newlines on both sides of the cursor
- 
+
  This is  -!-    too much whitespace.
 
  ;;; ->
@@ -1052,7 +1076,7 @@ whitespace."
 
 ;;;###autoload
 (defun paxedit-goto-start-of-symbol ()
-  "Move cursor to the start of the current symbol. 
+  "Move cursor to the start of the current symbol.
 
 e.g.
 "
@@ -1250,7 +1274,7 @@ Scenario 4. Region has mark set
 symbol, the symbol is wrapped in parentheses (see scenario 1). If the cursor
 is outside of any symbol a pair of parentheses are inserted, and a space
 is inserted to seperate the newly created parentheses from any neighboring
-symbols (see scenario 2). If the cursor is located within a string a 
+symbols (see scenario 2). If the cursor is located within a string a
 single, open parenthesis will be inserted without a matching close
 parenthesis (see scenario 3).
 
@@ -1293,7 +1317,7 @@ Scenario 4. Region has mark set
 symbol, the symbol is wrapped in brackets (see scenario 1). If the cursor
 is outside of any symbol a pair of brackets are inserted, and a space
 is inserted to seperate the newly created brackets from any neighboring
-symbols (see scenario 2). If the cursor is located within a string a 
+symbols (see scenario 2). If the cursor is located within a string a
 single, open bracket will be inserted without a matching close
 bracket (see scenario 3).
 
@@ -1336,7 +1360,7 @@ Scenario 4. Region has mark set
 symbol, the symbol is wrapped in curly brackets (see scenario 1). If the cursor
 is outside of any symbol a pair of curly brackets are inserted, and a space
 is inserted to seperate the newly created curly brackets from any neighboring
-symbols (see scenario 2). If the cursor is located within a string a 
+symbols (see scenario 2). If the cursor is located within a string a
 single, open curly bracket will be inserted without a matching close
 curly bracket (see scenario 3).
 
