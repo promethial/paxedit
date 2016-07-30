@@ -1214,7 +1214,7 @@ to the position before the start of LAST-STR."
   (goto-char (+ (length first-str)
                 (cl-rest region)))
   (insert last-str)
-  (decf (point)))
+  (cl-decf (point)))
 
 ;;;###autoload
 (defun paxedit-quoted-open-round ()
