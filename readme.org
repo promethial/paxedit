@@ -149,7 +149,7 @@ Available to install via Melpa.
    1. Paredit
 2. Install Paxedit by including ~paxedit.el~ in your path or building the file into a package.
 ** Setup
-1. Add this to your innit.el, .emacs.d, or other configuration file.
+1. Add this to your init.el, .emacs.d, or other configuration file.
    #+BEGIN_SRC emacs-lisp
 ;;; Load paxedit functionality
 (require 'paxedit)
