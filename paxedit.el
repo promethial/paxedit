@@ -152,22 +152,27 @@
 (make-variable-buffer-local 'paxedit-sexp-implicit-structures)
 
 ;;; Default Major Mode Associations
-(defvar paxedit-assoc '((emacs-lisp-mode . (paxedit-implicit-functions-elisp
-                                            ;; Elisp does not have any
-                                            ;; implicit structures
-                                            nil
-                                            ;; Mode specific function implementation
-                                            ((paxedit-insert-semicolon . paxedit-insert-semicolon-elisp))))
-                        (clojure-mode . (paxedit-implicit-functions-clojure
-                                         paxedit-implicit-structures-clojure
-                                         ;; Mode specific function implementation
-                                         ((paxedit-insert-semicolon . paxedit-insert-semicolon-clojure))))
-                        (lisp-interaction-mode . (paxedit-implicit-functions-common-lisp
-                                                  ;; TODO Common Lisp does not have
-                                                  ;; any implicit structures
-                                                  nil
-                                                  ;; Mode specific function implementation
-                                                  ((paxedit-insert-semicolon . paxedit-insert-semicolon-common-lisp)))))
+(defvar paxedit-assoc
+  (let ((clj-implicit-fns-and-structure
+         '(paxedit-implicit-functions-clojure
+           paxedit-implicit-structures-clojure
+           ;; Mode specific function implementation
+           ((paxedit-insert-semicolon . paxedit-insert-semicolon-clojure)))))
+    `((emacs-lisp-mode . (paxedit-implicit-functions-elisp
+                          ;; Elisp does not have any
+                          ;; implicit structures
+                          nil
+                          ;; Mode specific function implementation
+                          ((paxedit-insert-semicolon . paxedit-insert-semicolon-elisp))))
+      (clojure-mode . ,clj-implicit-fns-and-structure)
+      (clojurescript-mode . ,clj-implicit-fns-and-structure)
+      (clojurec-mode . ,clj-implicit-fns-and-structure)
+      (lisp-interaction-mode . (paxedit-implicit-functions-common-lisp
+                                ;; TODO Common Lisp does not have
+                                ;; any implicit structures
+                                nil
+                                ;; Mode specific function implementation
+                                ((paxedit-insert-semicolon . paxedit-insert-semicolon-common-lisp))))))
   "Associate major mode with implicit functions and structure.")
 
 ;;; Paxedit Defaults
